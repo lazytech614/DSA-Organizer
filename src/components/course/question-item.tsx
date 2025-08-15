@@ -1,33 +1,69 @@
 'use client';
 
 import { Question } from '@prisma/client';
-import { ExternalLink, CheckCircle } from 'lucide-react';
+import { ExternalLink, CheckCircle, Circle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useMarkQuestionSolved, useUnmarkQuestionSolved, useIsQuestionSolved } from '@/hooks/useSolvedQuestions';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
 interface QuestionItemProps {
   question: Question;
   index: number;
+  courseId?: string;
 }
 
-export function QuestionItem({ question, index }: QuestionItemProps) {
+export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
+  const { user } = useUser();
+  const isSolved = useIsQuestionSolved(question.id, courseId);
+  const markSolvedMutation = useMarkQuestionSolved();
+  const unmarkSolvedMutation = useUnmarkQuestionSolved();
+
   const difficultyColors = {
     EASY: 'text-green-400 border-green-400',
     MEDIUM: 'text-yellow-400 border-yellow-400',
     HARD: 'text-red-400 border-red-400',
   };
 
+  const handleToggleSolved = async () => {
+    if (!user) {
+      toast.error('Please sign in to track your progress');
+      return;
+    }
+
+    try {
+      if (isSolved) {
+        await unmarkSolvedMutation.mutateAsync(question.id);
+        toast.success('Question unmarked as solved');
+      } else {
+        await markSolvedMutation.mutateAsync(question.id);
+        toast.success('Great job! Question marked as solved! 🎉');
+      }
+    } catch (error) {
+      toast.error('Failed to update question status');
+    }
+  };
+
+  const isLoading = markSolvedMutation.isPending || unmarkSolvedMutation.isPending;
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-gray-700 last:border-b-0 hover:bg-gray-700/30 transition-colors gap-3 sm:gap-4">
       <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
         {/* Question Number */}
-        <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-600 text-xs sm:text-sm font-medium flex-shrink-0">
+        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 transition-colors ${
+          isSolved 
+            ? 'bg-green-600 text-white' 
+            : 'bg-gray-600 text-gray-300'
+        }`}>
           {index}
         </div>
 
         {/* Question Info */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-white truncate text-sm sm:text-base">
+          <h4 className={`font-medium truncate text-sm sm:text-base transition-colors ${
+            isSolved ? 'text-green-400 line-through' : 'text-white'
+          }`}>
             {question.title}
           </h4>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
@@ -85,13 +121,24 @@ export function QuestionItem({ question, index }: QuestionItemProps) {
           )}
         </div>
 
-        {/* Completion Status */}
+        {/* Completion Status Toggle */}
         <Button
           size="sm"
           variant="ghost"
-          className="text-gray-400 hover:text-green-400 p-1 sm:p-2 flex-shrink-0"
+          onClick={handleToggleSolved}
+          disabled={isLoading || !user}
+          className={`p-1 sm:p-2 flex-shrink-0 transition-colors ${
+            isSolved 
+              ? 'text-green-400 hover:text-green-300' 
+              : 'text-gray-400 hover:text-green-400'
+          } ${isLoading ? 'animate-pulse' : ''}`}
+          title={user ? (isSolved ? 'Mark as unsolved' : 'Mark as solved') : 'Sign in to track progress'}
         >
-          <CheckCircle className="w-4 h-4" />
+          {isSolved ? (
+            <CheckCircle className="w-4 h-4" />
+          ) : (
+            <Circle className="w-4 h-4" />
+          )}
         </Button>
       </div>
     </div>

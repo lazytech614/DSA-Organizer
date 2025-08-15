@@ -116,6 +116,7 @@ export function CourseContent({ course }: CourseContentProps) {
               topic={topic}
               questions={questions}
               stepNumber={index + 1}
+              courseId={course.id}
             />
           )
         ))}

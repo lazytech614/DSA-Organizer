@@ -16,18 +16,20 @@ model Question {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   courses     Course[]   @relation("CourseQuestions")
-
+  solvedBy    UserQuestionSolved[] // New relation
+  
   @@map("questions")
 }
 
 model User {
-  id       String   @id @default(cuid())
-  clerkId  String   @unique
-  name     String?
-  email    String?  @unique
-  courses  Course[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  clerkId     String   @unique
+  name        String?
+  email       String?  @unique
+  courses     Course[]
+  solvedQuestions UserQuestionSolved[] // New relation
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("users")
 }
@@ -43,6 +45,19 @@ model Course {
   updatedAt   DateTime   @updatedAt
 
   @@map("courses")
+}
+
+// New junction table to track solved questions
+model UserQuestionSolved {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId  String
+  solvedAt    DateTime @default(now())
+  
+  @@unique([userId, questionId]) // Prevent duplicate entries
+  @@map("user_questions_solved")
 }
 
 enum Difficulty {
