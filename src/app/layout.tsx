@@ -2,7 +2,6 @@ import { Inter } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ReactQueryProvider } from '@/components/providers/react-query-provider';
 import { Toaster } from 'sonner';
-import { Navbar } from '@/components/layout/navbar';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,16 +18,13 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body className={inter.className}>
+      <html lang="en" className="dark">
+        <body className={`${inter.className} dark:bg-gray-900 dark:text-white`}>
           <ReactQueryProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Navbar />
-              <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                {children}
-              </main>
+            <div className="min-h-screen bg-gray-900 text-white">
+              {children}
             </div>
-            <Toaster />
+            <Toaster theme="dark" />
           </ReactQueryProvider>
         </body>
       </html>

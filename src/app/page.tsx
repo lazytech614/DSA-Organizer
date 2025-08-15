@@ -1,93 +1,101 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useCourses } from '@/hooks/useQuestions';
-import { AddCourseDialog } from '@/components/dialogs/add-course-dialog';
-import { CourseCard } from '@/components/cards/course-card';
-import { useUser } from '@clerk/nextjs';
+import { CoursesSidebar } from '@/components/layout/courses-sidebar';
+import { CourseContent } from '@/components/layout/course-content';
+import { DashboardHeader } from '@/components/layout/dashboard-header';
+// import { MobileMenu } from '@/components/layout/mobile-menu';
+import { CourseWithQuestions } from '@/types';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   const { data: courses, isLoading, error } = useCourses();
-  const { isSignedIn } = useUser();
+  const [selectedCourse, setSelectedCourse] = useState<CourseWithQuestions | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Handle window resize
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setSidebarOpen(true);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading courses...</div>
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="text-lg text-gray-300">Loading courses...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg text-red-600">Error loading courses</div>
+      <div className="flex items-center justify-center h-screen bg-gray-900">
+        <div className="text-lg text-red-400">Error loading courses</div>
       </div>
     );
   }
 
-  const defaultCourses = courses?.filter(course => course.isDefault) || [];
-  const userCourses = courses?.filter(course => !course.isDefault) || [];
+  // Select default course by default if none selected
+  if (!selectedCourse && courses && courses.length > 0) {
+    const defaultCourse = courses.find(course => course.isDefault);
+    setSelectedCourse(defaultCourse || courses[0]);
+  }
 
   return (
-    <div className="px-4 sm:px-0">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">DSA Courses</h1>
-            <p className="text-gray-600 mt-1">
-              Organize and track your Data Structures and Algorithms journey
-            </p>
-          </div>
-          {isSignedIn && <AddCourseDialog />}
+    <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <div className="fixed top-4 left-4 z-50 lg:hidden">
+          <Button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            size="sm"
+            variant="outline"
+            className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+          >
+            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
         </div>
+      )}
 
-        <div className="space-y-8">
-          {/* Default Courses Section */}
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Default Courses
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {defaultCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-            {defaultCourses.length === 0 && (
-              <p className="text-gray-500">No default courses available.</p>
-            )}
-          </div>
+      {/* Sidebar */}
+      <div className={`
+        ${isMobile ? 'fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out' : 'relative'}
+        ${isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+        w-80 sm:w-72 lg:w-80 xl:w-96
+      `}>
+        <CoursesSidebar
+          courses={courses || []}
+          selectedCourse={selectedCourse}
+          onCourseSelect={(course) => {
+            setSelectedCourse(course);
+            if (isMobile) setSidebarOpen(false);
+          }}
+          isMobile={isMobile}
+        />
+      </div>
 
-          {/* User Courses Section */}
-          {isSignedIn && (
-            <div>
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                My Courses
-              </h2>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {userCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
-              {userCourses.length === 0 && (
-                <p className="text-gray-500">
-                  You haven't created any courses yet. Click "Add Course" to get started!
-                </p>
-              )}
-            </div>
-          )}
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          {/* Sign In Message for Non-Authenticated Users */}
-          {!isSignedIn && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                Create Your Own Courses
-              </h3>
-              <p className="text-blue-700 mb-4">
-                Sign in to create custom courses and organize your DSA journey
-              </p>
-            </div>
-          )}
-        </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <DashboardHeader selectedCourse={selectedCourse} isMobile={isMobile} />
+        <CourseContent course={selectedCourse} />
       </div>
     </div>
   );
