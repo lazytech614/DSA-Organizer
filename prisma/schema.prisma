@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Question {
+  id          String     @id @default(cuid())
+  title       String
+  topics      String[]
+  urls        String[]
+  difficulty  Difficulty
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  courses     Course[]   @relation("CourseQuestions")
+
+  @@map("questions")
+}
+
+model User {
+  id       String   @id @default(cuid())
+  clerkId  String   @unique
+  name     String?
+  email    String?  @unique
+  courses  Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Course {
+  id          String     @id @default(cuid())
+  title       String
+  isDefault   Boolean    @default(false)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  questions   Question[] @relation("CourseQuestions")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("courses")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
