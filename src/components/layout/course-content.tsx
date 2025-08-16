@@ -119,7 +119,7 @@ export function CourseContent({ course }: CourseContentProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
       {/* Course Header */}
       <div className="bg-gray-800 border-b border-gray-700 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">

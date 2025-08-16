@@ -164,7 +164,7 @@ export default function HomePage() {
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto main-content-scroll">
           <CourseContent course={selectedCourse} />
         </div>
       </div>

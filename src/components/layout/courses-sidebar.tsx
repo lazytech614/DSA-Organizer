@@ -34,7 +34,6 @@ export function CoursesSidebar({
   // Handle entrance animation
   useEffect(() => {
     if (isMobile) {
-      // Delay to allow CSS transition to work
       const timer = setTimeout(() => setIsVisible(true), 10);
       return () => clearTimeout(timer);
     } else {
@@ -53,7 +52,6 @@ export function CoursesSidebar({
   const handleClose = () => {
     if (onClose && isMobile) {
       setIsVisible(false);
-      // Delay closing to allow exit animation
       setTimeout(() => onClose(), 200);
     }
   };
@@ -61,7 +59,6 @@ export function CoursesSidebar({
   const defaultCourses = courses.filter(course => course.isDefault);
   const userCourses = courses.filter(course => !course.isDefault);
 
-  // Rest of your existing sidebar logic...
   const getUsagePercentage = () => {
     if (!userInfo?.limits) return 0;
     const { coursesUsed, maxCourses } = userInfo.limits;
@@ -70,7 +67,6 @@ export function CoursesSidebar({
   };
 
   const renderSubscriptionNotice = () => {
-    // Your existing renderSubscriptionNotice code...
     if (!userInfo) return null;
 
     const { isPro, limits, stats } = userInfo;
@@ -101,7 +97,6 @@ export function CoursesSidebar({
       );
     }
 
-    // Your other subscription notice variants...
     const isNearLimit = usagePercentage >= 80;
     const isAtLimit = !limits.canCreateCourse;
 
@@ -135,7 +130,6 @@ export function CoursesSidebar({
       );
     }
 
-    // Add other cases...
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 transform transition-all duration-300">
         <div className="flex items-center gap-2 mb-2">
@@ -193,19 +187,6 @@ export function CoursesSidebar({
               {isMobile ? 'Learning path' : 'Choose your learning path'}
             </p>
           </div>
-          
-          {/* Close button with hover effect */}
-          {/* {isMobile && onClose && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="text-gray-400 hover:text-white hover:bg-gray-800 p-2 ml-2 rounded-full transition-all duration-200 hover:rotate-90"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          )} */}
         </div>
       </div>
 
@@ -218,10 +199,31 @@ export function CoursesSidebar({
         </div>
       )}
 
-      {/* Courses List with Staggered Animation */}
+      {/* ✅ UPDATED: Modern Scrollbar - Courses List with Custom Scrollbar */}
       <div className={`flex-1 overflow-y-auto space-y-3 ${isMobile ? 'p-3' : 'p-4'} transition-all duration-300 delay-150 ${
         isMobile ? (isVisible ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
-      }`}>
+      } 
+      /* ✅ Modern Scrollbar Styles */
+      scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-600 
+      hover:scrollbar-thumb-gray-500 scrollbar-thumb-rounded-full 
+      scrollbar-corner-transparent
+      
+      /* ✅ Additional Custom Scrollbar for browsers that support it */
+      [&::-webkit-scrollbar]:w-2
+      [&::-webkit-scrollbar-track]:bg-transparent
+      [&::-webkit-scrollbar-thumb]:bg-gray-600
+      [&::-webkit-scrollbar-thumb]:rounded-full
+      [&::-webkit-scrollbar-thumb]:border-2
+      [&::-webkit-scrollbar-thumb]:border-solid
+      [&::-webkit-scrollbar-thumb]:border-transparent
+      [&::-webkit-scrollbar-thumb]:bg-clip-content
+      hover:[&::-webkit-scrollbar-thumb]:bg-gray-500
+      [&::-webkit-scrollbar-corner]:bg-transparent
+      
+      /* ✅ Smooth scrolling */
+      scroll-smooth
+      `}>
+        
         {/* Default Courses Section */}
         <div className="transform transition-all duration-300">
           <button
@@ -251,12 +253,12 @@ export function CoursesSidebar({
           {/* Animated expansion */}
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
             expandedSections.includes('default') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-          } pb-1`}>
-            <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
+          }`}>
+            <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'} pr-1`}>
               {defaultCourses.map((course, index) => (
                 <div
                   key={course.id}
-                  className={`transform transition-all duration-300 pr-1 ${
+                  className={`transform transition-all duration-300 ${
                     expandedSections.includes('default') 
                       ? 'translate-x-0 opacity-100' 
                       : '-translate-x-4 opacity-0'
@@ -311,11 +313,11 @@ export function CoursesSidebar({
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
               expandedSections.includes('user') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
             }`}>
-              <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
+              <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'} pr-1`}>
                 {userCourses.map((course, index) => (
                   <div
                     key={course.id}
-                    className={`group transform transition-all duration-300 pr-1 ${
+                    className={`group transform transition-all duration-300 ${
                       expandedSections.includes('user') 
                         ? 'translate-x-0 opacity-100' 
                         : '-translate-x-4 opacity-0'
