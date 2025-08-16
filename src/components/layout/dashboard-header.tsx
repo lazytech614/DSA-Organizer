@@ -38,8 +38,8 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
   });
 
   return (
-    <div className="bg-gray-800 border-b border-gray-700">
-      <div className={`${isMobile ? 'p-4 pt-16' : 'p-6'}`}>
+    <div className="bg-gray-900 border-b border-gray-700 min-h-[100px]">
+      <div className={`${isMobile ? 'p-4 pt-16' : 'p-4'}`}>
         <div className="flex items-center justify-between">
           {/* Course Info */}
           <div className="flex-1 min-w-0">

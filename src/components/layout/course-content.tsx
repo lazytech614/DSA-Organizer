@@ -89,7 +89,7 @@ export function CourseContent({ course }: CourseContentProps) {
               <Button
                 key={difficulty}
                 size="sm"
-                variant={selectedDifficulty === difficulty ? 'default' : 'ghost'}
+                variant={selectedDifficulty === difficulty ? 'default' : 'outline'}
                 onClick={() => setSelectedDifficulty(difficulty)}
                 className={`capitalize whitespace-nowrap ${
                   selectedDifficulty === difficulty

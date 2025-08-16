@@ -91,9 +91,9 @@ export function CourseStats({ course }: CourseStatsProps) {
   };
 
   return (
-    <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+    <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 overflow-x-hidden">
       {/* Desktop layout */}
-      <div className="hidden md:flex items-center gap-8">
+      <div className="hidden lg:flex items-center gap-8">
         {/* Left: Total Progress */}
         <div className="flex items-center gap-6 min-w-[220px]">
           <div>
@@ -107,9 +107,6 @@ export function CourseStats({ course }: CourseStatsProps) {
             <CircularProgress percentage={progressPercentage} />
           </div>
         </div>
-
-        {/* vertical divider */}
-        <div className="w-px h-12 bg-gray-700" />
 
         {/* Right: difficulty sections with divide-x for vertical separators */}
         <div className="flex items-center flex-1 divide-x divide-gray-700 pl-6">
@@ -176,7 +173,7 @@ export function CourseStats({ course }: CourseStatsProps) {
       </div>
 
       {/* Mobile layout */}
-      <div className="md:hidden space-y-6">
+      <div className="lg:hidden space-y-6">
         {/* Total Progress */}
         <div className="flex items-center justify-between">
           <div>

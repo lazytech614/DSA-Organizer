@@ -31,9 +31,9 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
   const userCourses = courses.filter(course => !course.isDefault);
 
   return (
-    <div className="w-full h-full bg-gray-800 border-r border-gray-700 flex flex-col">
+    <div className="w-full h-full bg-gray-900 border-r border-gray-700 flex flex-col">
       {/* Header */}
-      <div className={`border-b border-gray-700 ${isMobile ? 'p-4' : 'p-6'}`}>
+      <div className={`border-b border-gray-700 ${isMobile ? 'p-4' : 'p-6 min-h-[100px]'}`}>
         <h1 className={`font-bold text-orange-400 ${isMobile ? 'text-lg' : 'text-xl'}`}>
           DSA Platform
         </h1>
@@ -48,7 +48,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
         <div>
           <button
             onClick={() => toggleSection('default')}
-            className={`flex items-center justify-between w-full text-left rounded-lg transition-colors ${expandedSections.includes('default') ? 'bg-gray-700' : 'hover:bg-gray-700'} ${
+            className={`flex items-center justify-between w-full text-left rounded-lg transition-colors ${expandedSections.includes('default') ? 'bg-gray-800' : 'hover:bg-gray-800'} ${
               isMobile ? 'p-2' : 'p-2'
             }`}
           >
@@ -88,7 +88,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
           <div>
             <button
               onClick={() => toggleSection('user')}
-              className={`flex items-center justify-between w-full text-left ${expandedSections.includes('user') ? 'bg-gray-700' : 'hover:bg-gray-700'} rounded-lg transition-colors ${
+              className={`flex items-center justify-between w-full text-left ${expandedSections.includes('user') ? 'bg-gray-800' : 'hover:bg-gray-800'} rounded-lg transition-colors ${
                 isMobile ? 'p-2' : 'p-2'
               }`}
             >
