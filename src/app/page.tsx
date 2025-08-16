@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useCourses } from '@/hooks/useQuestions';
+import { useCourses } from '@/hooks/useCourses';
 import { CoursesSidebar } from '@/components/layout/courses-sidebar';
 import { CourseContent } from '@/components/layout/course-content';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
-// import { MobileMenu } from '@/components/layout/mobile-menu';
 import { CourseWithQuestions } from '@/types';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';

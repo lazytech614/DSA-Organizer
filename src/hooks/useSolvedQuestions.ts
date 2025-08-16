@@ -1,24 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useUser } from '@clerk/nextjs';
-import { json } from 'stream/consumers';
-
-export const useSolvedQuestions = (courseId?: string) => {
-  const { user } = useUser();
-  
-  return useQuery({
-    queryKey: ['solved-questions', courseId],
-    queryFn: async () => {
-      const params = courseId ? `?courseId=${courseId}` : '';
-      const response = await fetch(`/api/users/solved-questions${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch solved questions');
-      }
-      return response.json();
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-};
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useMarkQuestionSolved = () => {
   const queryClient = useQueryClient();
@@ -27,9 +7,7 @@ export const useMarkQuestionSolved = () => {
     mutationFn: async (questionId: string) => {
       const response = await fetch(`/api/questions/${questionId}/solve`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) {
@@ -39,10 +17,55 @@ export const useMarkQuestionSolved = () => {
       
       return response.json();
     },
-    onSuccess: () => {
-      // Invalidate relevant queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['solved-questions'] });
+    onMutate: async (questionId) => {
+      await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-info'] });
+      const previousCourses = queryClient.getQueryData(['courses']);
+      const previousUserInfo = queryClient.getQueryData(['user-info']);
+
+      queryClient.setQueryData(['courses'], (old: any) => {
+        if (!old) return old;
+        return old.map((course: any) => ({
+          ...course,
+          questions: course.questions.map((question: any) => 
+            question.id === questionId 
+              ? { ...question, isSolved: true }
+              : question
+          )
+        }));
+      });
+
+      // Update user info stats
+      queryClient.setQueryData(['user-info'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          stats: {
+            ...old.stats,
+            totalQuestionsSolved: old.stats.totalQuestionsSolved + 1,
+          },
+          solvedQuestions: [...old.solvedQuestions, {
+            id: `temp-${questionId}`,
+            questionId,
+            solvedAt: new Date().toISOString(),
+          }]
+        };
+      });
+
+      return { previousCourses, previousUserInfo };
+    },
+    onError: (err, questionId, context) => {
+      if (context?.previousCourses) {
+        queryClient.setQueryData(['courses'], context.previousCourses);
+      }
+      if (context?.previousUserInfo) {
+        queryClient.setQueryData(['user-info'], context.previousUserInfo);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-info'] });
+      queryClient.invalidateQueries({ queryKey: ['solved-questions'] });
     },
   });
 };
@@ -54,9 +77,7 @@ export const useUnmarkQuestionSolved = () => {
     mutationFn: async (questionId: string) => {
       const response = await fetch(`/api/questions/${questionId}/solve`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) {
@@ -66,16 +87,52 @@ export const useUnmarkQuestionSolved = () => {
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['solved-questions'] });
+    onMutate: async (questionId) => {
+      await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-info'] });
+      const previousCourses = queryClient.getQueryData(['courses']);
+      const previousUserInfo = queryClient.getQueryData(['user-info']);
+
+      queryClient.setQueryData(['courses'], (old: any) => {
+        if (!old) return old;
+        return old.map((course: any) => ({
+          ...course,
+          questions: course.questions.map((question: any) => 
+            question.id === questionId 
+              ? { ...question, isSolved: false }
+              : question
+          )
+        }));
+      });
+
+      // Update user info stats
+      queryClient.setQueryData(['user-info'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          stats: {
+            ...old.stats,
+            totalQuestionsSolved: Math.max(0, old.stats.totalQuestionsSolved - 1),
+          },
+          solvedQuestions: old.solvedQuestions.filter((sq: any) => sq.questionId !== questionId)
+        };
+      });
+
+      return { previousCourses, previousUserInfo };
+    },
+    onError: (err, questionId, context) => {
+      if (context?.previousCourses) {
+        queryClient.setQueryData(['courses'], context.previousCourses);
+      }
+      if (context?.previousUserInfo) {
+        queryClient.setQueryData(['user-info'], context.previousUserInfo);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-info'] });
+      queryClient.invalidateQueries({ queryKey: ['solved-questions'] });
     },
   });
 };
 
-// Hook to check if a specific question is solved
-export const useIsQuestionSolved = (questionId: string, courseId?: string) => {
-  const { data: solvedQuestions = [] } = useSolvedQuestions(courseId);
-  
-  return solvedQuestions.some((sq: any) => sq.questionId === questionId);
-};

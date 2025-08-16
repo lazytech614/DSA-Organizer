@@ -8,6 +8,7 @@ import { Search, Filter, MoreVertical, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useUserSubscription } from '@/hooks/useUserInfo';
 
 interface DashboardHeaderProps {
   selectedCourse: CourseWithQuestions | null;
@@ -18,6 +19,7 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
   const { isSignedIn } = useUser();
   const { user } = useUser();
   const [showSearch, setShowSearch] = useState(false);
+  const { data: userInfo, isLoading, error } = useUserSubscription();
 
   const { data: isAdminUser } = useQuery({
     queryKey: ['is-admin', user?.id],
@@ -69,14 +71,16 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
                   </Button>
                 </Link>
               ) : (
-              <Button
-                variant="outline"
-                size={isMobile ? "sm" : "default"}
-                className="hidden sm:flex"
-              >
-                <Star className="w-4 h-4 mr-1" />
-                <span>Get Pro</span>
-              </Button>
+                !userInfo?.isPro && (
+                  <Button
+                    variant="outline"
+                    size={isMobile ? "sm" : "default"}
+                    className="hidden sm:flex"
+                  >
+                    <Star className="w-4 h-4 mr-1" />
+                    <span>Get Pro</span>
+                  </Button>
+                )
             ) }
             {/* Mobile More Options */}
             {isMobile && (

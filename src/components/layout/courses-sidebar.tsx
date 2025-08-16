@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, BookOpen, Plus, User } from 'lucide-react';
+import { ChevronRight, ChevronDown, BookOpen, Plus, User, Crown, AlertTriangle, Zap, DeleteIcon, Trash } from 'lucide-react';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { CourseWithQuestions } from '@/types';
 import { Button } from '@/components/ui/button';
 import { AddCourseDialog } from '@/components/dialogs/add-course-dialog';
 import { Badge } from '@/components/ui/badge';
+import { useUserInfo } from '@/hooks/useUserInfo';
+import Link from 'next/link';
+import { DeleteCourseDialog } from '../dialogs/delete-course-dialog';
 
 interface CoursesSidebarProps {
   courses: CourseWithQuestions[];
@@ -18,6 +21,9 @@ interface CoursesSidebarProps {
 export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobile = false }: CoursesSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['default', 'user']);
   const { isSignedIn } = useUser();
+  const { data: userInfo, isLoading, isError } = useUserInfo();
+
+  console.log("UserInfo: ", userInfo);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -30,6 +36,141 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
   const defaultCourses = courses.filter(course => course.isDefault);
   const userCourses = courses.filter(course => !course.isDefault);
 
+  // Calculate progress percentage for visual indicator
+  const getUsagePercentage = () => {
+    if (!userInfo?.limits) return 0;
+    const { coursesUsed, maxCourses } = userInfo.limits;
+    if (maxCourses === -1) return 0; // Unlimited
+    return (coursesUsed / maxCourses) * 100;
+  };
+
+  const renderSubscriptionNotice = () => {
+    if (!userInfo) return null;
+
+    const { isPro, limits, stats } = userInfo;
+    const usagePercentage = getUsagePercentage();
+
+    if (isPro) {
+      return (
+        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown className="w-4 h-4 text-yellow-400" />
+            <h4 className="text-yellow-300 font-medium text-sm">Pro Member</h4>
+          </div>
+          <div className="space-y-1 text-xs text-yellow-200">
+            <div className="flex justify-between">
+              <span>Courses:</span>
+              <span className="font-medium">Unlimited</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Questions:</span>
+              <span className="font-medium">Unlimited per course</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Solved:</span>
+              <span className="font-medium">{stats.totalQuestionsSolved}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Free user notices
+    const isNearLimit = usagePercentage >= 80;
+    const isAtLimit = !limits.canCreateCourse;
+
+    if (isAtLimit) {
+      return (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+            <h4 className="text-red-300 font-medium text-sm">Limit Reached</h4>
+          </div>
+          <p className="text-xs text-red-200 mb-3">
+            You've used all {limits.maxCourses} course slots. Upgrade to create unlimited courses!
+          </p>
+          <Link href="/pricing">
+            <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-7">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade Now
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    if (isNearLimit) {
+      return (
+        <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-4 h-4 text-orange-400" />
+            <h4 className="text-orange-300 font-medium text-sm">Almost Full</h4>
+          </div>
+          <div className="space-y-2">
+            <div className="text-xs text-orange-200">
+              <div className="flex justify-between mb-1">
+                <span>Courses used:</span>
+                <span className="font-medium">{limits.coursesUsed} / {limits.maxCourses}</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-1.5">
+                <div 
+                  className="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${usagePercentage}%` }}
+                />
+              </div>
+            </div>
+            <Link href="/pricing">
+              <Button size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-7">
+                <Crown className="w-3 h-3 mr-1" />
+                Upgrade for Unlimited
+              </Button>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular free user status
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <User className="w-4 h-4 text-gray-400" />
+          <h4 className="text-gray-300 font-medium text-sm">Free Plan</h4>
+        </div>
+        <div className="space-y-2">
+          <div className="text-xs text-gray-400">
+            <div className="flex justify-between mb-1">
+              <span>Courses:</span>
+              <span className="font-medium text-gray-300">{limits.coursesUsed} / {limits.maxCourses}</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div 
+                className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${usagePercentage}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>Questions solved:</span>
+            <span className="font-medium text-gray-300">{stats.totalQuestionsSolved}</span>
+          </div>
+          {stats.streakDays > 0 && (
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Current streak:</span>
+              <span className="font-medium text-green-400">{stats.streakDays} days 🔥</span>
+            </div>
+          )}
+          <Link href="/pricing">
+            <Button size="sm" variant="outline" className="w-full text-xs h-7 border-gray-600 hover:bg-gray-700">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade to Pro
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full h-full bg-gray-900 border-r border-gray-700 flex flex-col">
       {/* Header */}
@@ -41,6 +182,13 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
           {isMobile ? 'Learning path' : 'Choose your learning path'}
         </p>
       </div>
+
+      {/* Subscription Notice - Only show for signed in users */}
+      {isSignedIn && !isLoading && (
+        <div className={`border-b border-gray-700 ${isMobile ? 'p-3' : 'p-4'}`}>
+          {renderSubscriptionNotice()}
+        </div>
+      )}
 
       {/* Courses List */}
       <div className={`flex-1 overflow-y-auto space-y-3 ${isMobile ? 'p-3' : 'p-4'}`}>
@@ -98,26 +246,36 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
                 ) : (
                   <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 )}
-                <User className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <div className="flex items-center gap-1">
+                  <User className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  {userInfo?.isPro && (
+                    <Crown className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                  )}
+                </div>
                 <span className={`font-medium text-gray-200 truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
                   My Courses
+                  {userInfo?.isPro && <span className="text-yellow-400 ml-1">Pro</span>}
                 </span>
               </div>
               <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2">
                 {userCourses.length}
+                {userInfo?.limits && userInfo.limits.maxCourses !== -1 && (
+                  <span className="text-gray-500">/{userInfo.limits.maxCourses}</span>
+                )}
               </Badge>
             </button>
 
             {expandedSections.includes('user') && (
               <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
                 {userCourses.map((course) => (
-                  <CourseItem
-                    key={course.id}
-                    course={course}
-                    isSelected={selectedCourse?.id === course.id}
-                    onClick={() => onCourseSelect(course)}
-                    isMobile={isMobile}
-                  />
+                  <div key={course.id} className="group">
+                    <CourseItem
+                      course={course}
+                      isSelected={selectedCourse?.id === course.id}
+                      onClick={() => onCourseSelect(course)}
+                      isMobile={isMobile}
+                    />
+                  </div>
                 ))}
                 <div className="mt-2">
                   <AddCourseDialog />
@@ -156,32 +314,56 @@ interface CourseItemProps {
 }
 
 function CourseItem({ course, isSelected, onClick, isMobile = false }: CourseItemProps) {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); 
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-lg transition-colors ${
+    <div
+      className={`w-full rounded-lg transition-colors ${
         isMobile ? 'p-2' : 'p-3'
       } ${
         isSelected
-          ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
-          : 'hover:bg-gray-700 text-gray-300'
+          ? 'bg-orange-500/10 border border-orange-500/20'
+          : 'hover:bg-gray-700'
       }`}
     >
       <div className="flex items-center justify-between min-w-0">
-        <div className="flex-1 min-w-0">
+        {/* Clickable course info */}
+        <button
+          onClick={onClick}
+          className={`flex-1 min-w-0 text-left ${
+            isSelected ? 'text-orange-400' : 'text-gray-300'
+          }`}
+        >
           <p className={`font-medium truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
             {course.title}
           </p>
           <p className="text-xs text-gray-400 mt-1">
             {course.questions.length} questions
           </p>
+        </button>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-1 ml-2" onClick={handleDeleteClick}>
+          {course.isDefault ? (
+            <Badge variant="outline" className="text-xs flex-shrink-0">
+              Default
+            </Badge>
+          ) : (
+            <DeleteCourseDialog course={course}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-400 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Delete course"
+              >
+                <Trash className="w-3 h-3" />
+              </Button>
+            </DeleteCourseDialog>
+          )}
         </div>
-        {course.isDefault && (
-          <Badge variant="outline" className="ml-2 text-xs flex-shrink-0">
-            Default
-          </Badge>
-        )}
       </div>
-    </button>
+    </div>
   );
 }

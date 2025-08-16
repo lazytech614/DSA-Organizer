@@ -5,7 +5,9 @@ import { ExternalLink, CheckCircle, Circle, Bookmark, BookmarkCheck } from 'luci
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useMarkQuestionSolved, useUnmarkQuestionSolved } from '@/hooks/useSolvedQuestions';
-import { useBookmarkQuestion, useUnbookmarkQuestion, useIsQuestionBookmarked } from '@/hooks/useBookamrks';
+import { useBookmarkQuestion, useUnbookmarkQuestion } from '@/hooks/useBookamrks';
+import { useCourses } from '@/hooks/useCourses';
+import { useUserInfo } from '@/hooks/useUserInfo';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
@@ -18,17 +20,23 @@ interface QuestionItemProps {
 export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
   const { user } = useUser();
   
-  // ✅ Call hooks unconditionally at the top level
-  const hookIsSolved = question.isSolved;
-  const hookIsBookmarked = useIsQuestionBookmarked(question.id);
+  // ✅ Get live data from React Query
+  const { data: courses } = useCourses();
+  const { data: userInfo } = useUserInfo();
+  
+  // ✅ Find the current question with live data
+  const currentCourse = courses?.find(c => c.id === courseId);
+  const currentQuestion = currentCourse?.questions.find(q => q.id === question.id);
+  
+  // ✅ Use live data or fallback to props
+  const isSolved = currentQuestion?.isSolved ?? question.isSolved ?? false;
+  const isBookmarked = userInfo?.bookmarkedQuestions.includes(question.id) ?? question.isBookmarked ?? false;
+  
+  // ✅ Initialize mutation hooks
   const markSolvedMutation = useMarkQuestionSolved();
   const unmarkSolvedMutation = useUnmarkQuestionSolved();
   const bookmarkMutation = useBookmarkQuestion();
   const unbookmarkMutation = useUnbookmarkQuestion();
-
-  // ✅ Use the data after hooks are called
-  const isSolved = question.isSolved ?? hookIsSolved ?? false;
-  const isBookmarked = question.isBookmarked ?? hookIsBookmarked ?? false;
 
   const difficultyColors = {
     EASY: 'text-green-400 border-green-400',
@@ -85,9 +93,9 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
     }`}>
       <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
         {/* Question Number */}
-        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 transition-all duration-200 ${
+        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 transition-all duration-300 ${
           isSolved 
-            ? 'bg-green-600 text-white shadow-lg' 
+            ? 'bg-green-600 text-white shadow-lg transform scale-105' 
             : 'bg-gray-600 text-gray-300'
         }`}>
           {isSolved ? '✓' : index}
@@ -96,19 +104,19 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
         {/* Question Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`font-medium truncate text-sm sm:text-base transition-all duration-200 ${
+            <h4 className={`font-medium truncate text-sm sm:text-base transition-all duration-300 ${
               isSolved ? 'text-green-400' : 'text-white'
             }`}>
               {question.title}
             </h4>
             {isBookmarked && (
-              <BookmarkCheck className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <BookmarkCheck className="w-4 h-4 text-yellow-500 flex-shrink-0 animate-pulse" />
             )}
           </div>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
             <Badge 
               variant="outline" 
-              className={`text-xs ${difficultyColors[question.difficulty as keyof typeof difficultyColors]}`}
+              className={`text-xs transition-all duration-200 ${difficultyColors[question.difficulty as keyof typeof difficultyColors]}`}
             >
               {question.difficulty}
             </Badge>
@@ -137,7 +145,7 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
               key={urlIndex}
               size="sm"
               variant="ghost"
-              className="text-gray-400 hover:text-white p-1 sm:p-2"
+              className="text-gray-400 hover:text-white p-1 sm:p-2 transition-colors"
               asChild
             >
               <a
@@ -166,9 +174,9 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
           variant="ghost"
           onClick={handleToggleBookmark}
           disabled={isBookmarkLoading}
-          className={`p-1 sm:p-2 flex-shrink-0 transition-all duration-200 ${
+          className={`p-1 sm:p-2 flex-shrink-0 transition-all duration-300 ${
             isBookmarked 
-              ? 'text-yellow-500 hover:text-yellow-400' 
+              ? 'text-yellow-500 hover:text-yellow-400 scale-105' 
               : 'text-gray-400 hover:text-yellow-500'
           } ${isBookmarkLoading ? 'animate-pulse' : ''}`}
           title={user ? (isBookmarked ? 'Remove bookmark' : 'Bookmark question') : 'Sign in to bookmark'}
@@ -188,9 +196,9 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
           variant="ghost"
           onClick={handleToggleSolved}
           disabled={isSolvedLoading}
-          className={`p-1 sm:p-2 flex-shrink-0 transition-all duration-200 ${
+          className={`p-1 sm:p-2 flex-shrink-0 transition-all duration-300 ${
             isSolved 
-              ? 'text-green-400 hover:text-green-300' 
+              ? 'text-green-400 hover:text-green-300 scale-105' 
               : 'text-gray-400 hover:text-green-400'
           } ${isSolvedLoading ? 'animate-pulse' : ''}`}
           title={user ? (isSolved ? 'Mark as unsolved' : 'Mark as solved') : 'Sign in to track progress'}

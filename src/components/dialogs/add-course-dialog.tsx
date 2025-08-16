@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useCreateCourse } from '@/hooks/useQuestions';
+import { useCreateCourse } from '@/hooks/useCourses';
 import {
   Dialog,
   DialogContent,

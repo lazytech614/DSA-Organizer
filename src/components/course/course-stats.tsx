@@ -2,17 +2,12 @@
 
 import React from 'react';
 import { CourseWithQuestions } from '@/types';
-import { Separator } from '../ui/separator';
+import { useCourses } from '@/hooks/useCourses'; // Import your courses hook
 
 interface CourseStatsProps {
   course: CourseWithQuestions;
 }
 
-/**
- * CircularProgress
- * - percentage: number 0..100
- * - size: diameter in px (default 80)
- */
 function CircularProgress({ percentage, size = 80 }: { percentage: number; size?: number }) {
   const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
@@ -67,15 +62,19 @@ function CircularProgress({ percentage, size = 80 }: { percentage: number; size?
 }
 
 export function CourseStats({ course }: CourseStatsProps) {
-  const totalQuestions = course.questions.length;
-  const easyCount = course.questions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
-  const mediumCount = course.questions.filter(q => q.difficulty.toUpperCase() === 'MEDIUM').length;
-  const hardCount = course.questions.filter(q => q.difficulty.toUpperCase() === 'HARD').length;
+  const { data: courses } = useCourses();
+  
+  const currentCourse = courses?.find(c => c.id === course.id) || course;
 
-  const completedCount = course.questions.filter(q => q.isSolved).length;
-  const easyCompletedCount = course.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'EASY').length;
-  const mediumCompletedCount = course.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'MEDIUM').length;
-  const hardCompletedCount = course.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'HARD').length;
+  const totalQuestions = currentCourse.questions.length;
+  const easyCount = currentCourse.questions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
+  const mediumCount = currentCourse.questions.filter(q => q.difficulty.toUpperCase() === 'MEDIUM').length;
+  const hardCount = currentCourse.questions.filter(q => q.difficulty.toUpperCase() === 'HARD').length;
+
+  const completedCount = currentCourse.questions.filter(q => q.isSolved).length;
+  const easyCompletedCount = currentCourse.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'EASY').length;
+  const mediumCompletedCount = currentCourse.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'MEDIUM').length;
+  const hardCompletedCount = currentCourse.questions.filter(q => q.isSolved && q.difficulty.toUpperCase() === 'HARD').length;
 
   const progressPercentage = totalQuestions > 0 ? (completedCount / totalQuestions) * 100 : 0;
   const easyProgressPercentage = easyCount > 0 ? (easyCompletedCount / easyCount) * 100 : 0;
@@ -98,7 +97,7 @@ export function CourseStats({ course }: CourseStatsProps) {
         <div className="flex items-center gap-6 min-w-[220px]">
           <div>
             <h3 className="text-gray-200 font-semibold text-lg mb-1">Total Progress</h3>
-            <div className="text-white text-2xl font-extrabold">
+            <div className="text-white text-2xl font-extrabold transition-all duration-300">
               {completedCount} / {totalQuestions}
             </div>
           </div>
@@ -115,7 +114,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             <h4 className="text-gray-200 font-semibold mb-1">Easy</h4>
 
             <div className="flex items-baseline gap-3">
-              <div className="text-white text-xl font-extrabold">
+              <div className="text-white text-xl font-extrabold transition-all duration-300">
                 {easyCompletedCount}
                 <span className="text-gray-400 font-normal text-base"> / {easyCount}</span>
               </div>
@@ -124,7 +123,7 @@ export function CourseStats({ course }: CourseStatsProps) {
 
             <div className="mt-3 w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${easyProgressPercentage}%`, backgroundColor: colors.easy }}
               />
             </div>
@@ -135,7 +134,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             <h4 className="text-gray-200 font-semibold mb-1">Medium</h4>
 
             <div className="flex items-baseline gap-3">
-              <div className="text-white text-xl font-extrabold">
+              <div className="text-white text-xl font-extrabold transition-all duration-300">
                 {mediumCompletedCount}
                 <span className="text-gray-400 font-normal text-base"> / {mediumCount}</span>
               </div>
@@ -144,7 +143,7 @@ export function CourseStats({ course }: CourseStatsProps) {
 
             <div className="mt-3 w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${mediumProgressPercentage}%`, backgroundColor: colors.medium }}
               />
             </div>
@@ -155,7 +154,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             <h4 className="text-gray-200 font-semibold mb-1">Hard</h4>
 
             <div className="flex items-baseline gap-3">
-              <div className="text-white text-xl font-extrabold">
+              <div className="text-white text-xl font-extrabold transition-all duration-300">
                 {hardCompletedCount}
                 <span className="text-gray-400 font-normal text-base"> / {hardCount}</span>
               </div>
@@ -164,7 +163,7 @@ export function CourseStats({ course }: CourseStatsProps) {
 
             <div className="mt-3 w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${hardProgressPercentage}%`, backgroundColor: colors.hard }}
               />
             </div>
@@ -178,7 +177,7 @@ export function CourseStats({ course }: CourseStatsProps) {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-gray-200 font-semibold text-lg mb-1">Total Progress</h3>
-            <div className="text-white text-2xl font-bold">
+            <div className="text-white text-2xl font-bold transition-all duration-300">
               {completedCount} / {totalQuestions}
             </div>
           </div>
@@ -191,13 +190,13 @@ export function CourseStats({ course }: CourseStatsProps) {
           {/* Easy */}
           <div className="space-y-1">
             <h4 className="text-white font-semibold text-sm">Easy</h4>
-            <div className="text-green-400 font-bold text-sm">
+            <div className="text-green-400 font-bold text-sm transition-all duration-300">
               {easyCompletedCount} / {easyCount}
             </div>
             <div className="text-gray-400 text-xs">completed</div>
             <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-1.5 rounded-full transition-all duration-300"
+                className="h-1.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${easyProgressPercentage}%`, backgroundColor: colors.easy }}
               />
             </div>
@@ -206,13 +205,13 @@ export function CourseStats({ course }: CourseStatsProps) {
           {/* Medium */}
           <div className="space-y-1">
             <h4 className="text-white font-semibold text-sm">Medium</h4>
-            <div className="text-yellow-400 font-bold text-sm">
+            <div className="text-yellow-400 font-bold text-sm transition-all duration-300">
               {mediumCompletedCount} / {mediumCount}
             </div>
             <div className="text-gray-400 text-xs">completed</div>
             <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-1.5 rounded-full transition-all duration-300"
+                className="h-1.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${mediumProgressPercentage}%`, backgroundColor: colors.medium }}
               />
             </div>
@@ -221,13 +220,13 @@ export function CourseStats({ course }: CourseStatsProps) {
           {/* Hard */}
           <div className="space-y-1">
             <h4 className="text-white font-semibold text-sm">Hard</h4>
-            <div className="text-red-400 font-bold text-sm">
+            <div className="text-red-400 font-bold text-sm transition-all duration-300">
               {hardCompletedCount} / {hardCount}
             </div>
             <div className="text-gray-400 text-xs">completed</div>
             <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-1.5 rounded-full transition-all duration-300"
+                className="h-1.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${hardProgressPercentage}%`, backgroundColor: colors.hard }}
               />
             </div>

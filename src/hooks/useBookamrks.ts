@@ -36,24 +36,37 @@ export const useBookmarkQuestion = () => {
       return response.json();
     },
     onMutate: async (questionId) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['bookmarks'] });
+      await queryClient.cancelQueries({ queryKey: ['user-info'] });
       await queryClient.cancelQueries({ queryKey: ['courses'] });
 
-      // Snapshot the previous values
       const previousBookmarks = queryClient.getQueryData(['bookmarks']);
+      const previousUserInfo = queryClient.getQueryData(['user-info']);
       const previousCourses = queryClient.getQueryData(['courses']);
 
-      // Optimistically update bookmarks
       queryClient.setQueryData(['bookmarks'], (old: any) => {
         if (!old) return [questionId];
         return old.includes(questionId) ? old : [...old, questionId];
       });
 
-      // Optimistically update courses data if it includes bookmark status
+      queryClient.setQueryData(['user-info'], (old: any) => {
+        if (!old) return old;
+        const newBookmarks = old.bookmarkedQuestions.includes(questionId) 
+          ? old.bookmarkedQuestions 
+          : [...old.bookmarkedQuestions, questionId];
+        
+        return {
+          ...old,
+          bookmarkedQuestions: newBookmarks,
+          stats: {
+            ...old.stats,
+            questionsBookmarked: newBookmarks.length,
+          }
+        };
+      });
+
       queryClient.setQueryData(['courses'], (old: any) => {
         if (!old) return old;
-        
         return old.map((course: any) => ({
           ...course,
           questions: course.questions.map((question: any) => 
@@ -64,24 +77,27 @@ export const useBookmarkQuestion = () => {
         }));
       });
 
-      return { previousBookmarks, previousCourses };
+      return { previousBookmarks, previousUserInfo, previousCourses };
     },
     onError: (err, questionId, context) => {
-      // Rollback on error
       if (context?.previousBookmarks) {
         queryClient.setQueryData(['bookmarks'], context.previousBookmarks);
+      }
+      if (context?.previousUserInfo) {
+        queryClient.setQueryData(['user-info'], context.previousUserInfo);
       }
       if (context?.previousCourses) {
         queryClient.setQueryData(['courses'], context.previousCourses);
       }
     },
     onSettled: () => {
-      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      queryClient.invalidateQueries({ queryKey: ['user-info'] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
     },
   });
 };
+
 
 export const useUnbookmarkQuestion = () => {
   const queryClient = useQueryClient();
@@ -103,9 +119,11 @@ export const useUnbookmarkQuestion = () => {
     onMutate: async (questionId) => {
       await queryClient.cancelQueries({ queryKey: ['bookmarks'] });
       await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-info'] });
 
       const previousBookmarks = queryClient.getQueryData(['bookmarks']);
       const previousCourses = queryClient.getQueryData(['courses']);
+      const previousUserInfo = queryClient.getQueryData(['user-info']);
 
       // Optimistically remove bookmark
       queryClient.setQueryData(['bookmarks'], (old: any) => {
@@ -127,7 +145,24 @@ export const useUnbookmarkQuestion = () => {
         }));
       });
 
-      return { previousBookmarks, previousCourses };
+      // Optimistically update user info
+      queryClient.setQueryData(['user-info'], (old: any) => {
+        if (!old) return old;
+        const newBookmarks = old.bookmarkedQuestions.includes(questionId) 
+          ? old.bookmarkedQuestions 
+          : [...old.bookmarkedQuestions, questionId];
+        
+        return {
+          ...old,
+          bookmarkedQuestions: newBookmarks,
+          stats: {
+            ...old.stats,
+            questionsBookmarked: newBookmarks.length,
+          }
+        };
+      });
+
+      return { previousBookmarks, previousCourses, previousUserInfo };
     },
     onError: (err, questionId, context) => {
       if (context?.previousBookmarks) {
@@ -136,10 +171,14 @@ export const useUnbookmarkQuestion = () => {
       if (context?.previousCourses) {
         queryClient.setQueryData(['courses'], context.previousCourses);
       }
+      if (context?.previousUserInfo) {
+        queryClient.setQueryData(['user-info'], context.previousUserInfo);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-info'] });
     },
   });
 };

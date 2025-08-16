@@ -15,7 +15,7 @@ interface TopicSectionProps {
 }
 
 export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const easyCount = questions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
   const mediumCount = questions.filter(q => q.difficulty.toUpperCase() === 'MEDIUM').length;
