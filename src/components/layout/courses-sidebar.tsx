@@ -48,7 +48,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
         <div>
           <button
             onClick={() => toggleSection('default')}
-            className={`flex items-center justify-between w-full text-left hover:bg-gray-700 rounded-lg transition-colors ${
+            className={`flex items-center justify-between w-full text-left rounded-lg transition-colors ${expandedSections.includes('default') ? 'bg-gray-700' : 'hover:bg-gray-700'} ${
               isMobile ? 'p-2' : 'p-2'
             }`}
           >
@@ -88,7 +88,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
           <div>
             <button
               onClick={() => toggleSection('user')}
-              className={`flex items-center justify-between w-full text-left hover:bg-gray-700 rounded-lg transition-colors ${
+              className={`flex items-center justify-between w-full text-left ${expandedSections.includes('user') ? 'bg-gray-700' : 'hover:bg-gray-700'} rounded-lg transition-colors ${
                 isMobile ? 'p-2' : 'p-2'
               }`}
             >

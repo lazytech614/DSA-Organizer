@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CourseWithQuestions } from '@/types';
+import { Separator } from '../ui/separator';
 
 interface CourseStatsProps {
   course: CourseWithQuestions;
@@ -90,7 +91,7 @@ export function CourseStats({ course }: CourseStatsProps) {
   };
 
   return (
-    <div className="bg-gray-700 rounded-2xl p-6 border border-gray-800">
+    <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
       {/* Desktop layout */}
       <div className="hidden md:flex items-center gap-8">
         {/* Left: Total Progress */}
@@ -108,7 +109,7 @@ export function CourseStats({ course }: CourseStatsProps) {
         </div>
 
         {/* vertical divider */}
-        <div className="h-20 w-px bg-gray-800" />
+        <div className="w-px h-12 bg-gray-700" />
 
         {/* Right: difficulty sections with divide-x for vertical separators */}
         <div className="flex items-center flex-1 divide-x divide-gray-700 pl-6">
