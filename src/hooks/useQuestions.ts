@@ -146,14 +146,10 @@ export const useDeleteQuestion = () => {
         },
       });
 
-      console.log('🔴🔴response', response);
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete question');
       }
-
-      console.log('✅ Question deleted successfully', response);
 
       return response.json();
     },

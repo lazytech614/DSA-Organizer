@@ -6,6 +6,7 @@ export type QuestionWithCourses = Question & {
 
 export type QuestionWithSolvedStatus = Question & {
   isSolved: boolean;
+  isBookmarked: boolean;
 };
 
 export type CourseWithQuestions = Course & {

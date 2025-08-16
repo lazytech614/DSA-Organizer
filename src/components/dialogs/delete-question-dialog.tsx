@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash, AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -19,20 +19,42 @@ interface DeleteQuestionDialogProps {
   question: Question & { isSolved?: boolean; isBookmarked?: boolean };
   children?: React.ReactNode;
   courseTitle?: string;
+  onDeleteStart?: () => void; // Callback when deletion starts
+  onDeleteComplete?: () => void; // Callback when deletion completes
 }
 
-export function DeleteQuestionDialog({ question, children, courseTitle }: DeleteQuestionDialogProps) {
+export function DeleteQuestionDialog({ 
+  question, 
+  children, 
+  courseTitle,
+  onDeleteStart,
+  onDeleteComplete 
+}: DeleteQuestionDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const deleteQuestion = useDeleteQuestion();
 
   const handleDelete = async () => {
     try {
+      setIsDeleting(true);
+      onDeleteStart?.(); // Trigger optimistic UI update
+      
       await deleteQuestion.mutateAsync(question.id);
+      
       setOpen(false);
+      onDeleteComplete?.(); // Cleanup if needed
     } catch (error) {
-      // Error is handled in the hook
+      setIsDeleting(false);
+      // Error is handled in the hook with rollback
     }
   };
+
+  // Reset states when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setIsDeleting(false);
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -41,7 +63,7 @@ export function DeleteQuestionDialog({ question, children, courseTitle }: Delete
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-gray-400 hover:text-red-400 p-1"
+            className="text-gray-400 hover:text-red-400 p-1 transition-all duration-200"
             title="Delete question"
           >
             <Trash className="w-4 h-4" />
@@ -106,16 +128,16 @@ export function DeleteQuestionDialog({ question, children, courseTitle }: Delete
               variant="outline"
               onClick={() => setOpen(false)}
               className="border-gray-600 hover:bg-gray-700"
-              disabled={deleteQuestion.isPending}
+              disabled={deleteQuestion.isPending || isDeleting}
             >
               Cancel
             </Button>
             <Button
               onClick={handleDelete}
-              disabled={deleteQuestion.isPending}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={deleteQuestion.isPending || isDeleting}
+              className="bg-red-500 hover:bg-red-600 text-white transition-all duration-200"
             >
-              {deleteQuestion.isPending ? (
+              {deleteQuestion.isPending || isDeleting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                   Deleting...

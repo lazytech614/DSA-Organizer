@@ -123,7 +123,7 @@ export function CourseStats({ course }: CourseStatsProps) {
 
             <div className="mt-3 w-full rounded-full h-2 overflow-hidden" style={{ backgroundColor: colors.progressTrack }}>
               <div
-                className="h-2 rounded-full transition-all duration-500 ease-out"
+                className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${easyProgressPercentage}%`, backgroundColor: colors.easy }}
               />
             </div>

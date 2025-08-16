@@ -251,12 +251,12 @@ export function CoursesSidebar({
           {/* Animated expansion */}
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
             expandedSections.includes('default') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-          }`}>
+          } pb-1`}>
             <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
               {defaultCourses.map((course, index) => (
                 <div
                   key={course.id}
-                  className={`transform transition-all duration-300 ${
+                  className={`transform transition-all duration-300 pr-1 ${
                     expandedSections.includes('default') 
                       ? 'translate-x-0 opacity-100' 
                       : '-translate-x-4 opacity-0'
@@ -294,9 +294,6 @@ export function CoursesSidebar({
                 </div>
                 <div className="flex items-center gap-1">
                   <User className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                  {userInfo?.isPro && (
-                    <Crown className="w-3 h-3 text-yellow-400 flex-shrink-0 animate-pulse" />
-                  )}
                 </div>
                 <span className={`font-medium text-gray-200 truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
                   My Courses
@@ -318,7 +315,7 @@ export function CoursesSidebar({
                 {userCourses.map((course, index) => (
                   <div
                     key={course.id}
-                    className={`group transform transition-all duration-300 ${
+                    className={`group transform transition-all duration-300 pr-1 ${
                       expandedSections.includes('user') 
                         ? 'translate-x-0 opacity-100' 
                         : '-translate-x-4 opacity-0'
