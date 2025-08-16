@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
+interface RouteContext {
+  params: Promise<{ questionId: string }>;
+}
+
 export async function POST(
   request: NextRequest,
-  { params }: { params: { questionId: string } }
+  context: RouteContext
 ) {
   try {
     const { userId: clerkUserId } = await auth();
@@ -12,6 +16,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const params = await context.params;
     const { questionId } = params;
 
     // Get the prisma user
@@ -71,7 +76,7 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { questionId: string } }
+  context: RouteContext
 ) {
   try {
     const { userId: clerkUserId } = await auth();
@@ -79,6 +84,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const params = await context.params;
     const { questionId } = params;
 
     const prismaUser = await db.user.findUnique({
