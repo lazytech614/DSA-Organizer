@@ -10,14 +10,12 @@ async function isAdmin(userId: string): Promise<boolean> {
     const userEmail = user.emailAddresses[0]?.emailAddress;
     if (!userEmail) return false;
 
-    // Get admin emails from environment variable
-    const adminEmailsStr = process.env.ADMIN_EMAILS;
+    const adminEmailsStr = process.env.NEXT_PUBLIC_ADMIN_EMAILS;
     if (!adminEmailsStr) {
       console.warn('ADMIN_EMAILS environment variable is not set');
       return false;
     }
 
-    // Split by comma and trim whitespace
     const adminEmails = adminEmailsStr
       .split(',')
       .map(email => email.trim())
@@ -30,43 +28,75 @@ async function isAdmin(userId: string): Promise<boolean> {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // const { userId } = await auth();
+    const { userId } = await auth();
     
-    // if (!userId) {
-    //   return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 });
-    // }
-
-    //TODO: check if user is admin
-    // if (!(await isAdmin(userId))) {
-    //   return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    // }
-
-    const defaultCourse = await db.course.findFirst({
-      where: { isDefault: true },
-      include: {
-        questions: {
-          orderBy: {
-            createdAt: 'desc'
-          }
-        }
-      }
-    });
-
-    if (!defaultCourse) {
-      return NextResponse.json({ error: 'Default course not found' }, { status: 404 });
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 });
     }
 
-    return NextResponse.json({
-      course: defaultCourse,
-      questionsCount: defaultCourse.questions.length
-    });
+    if (!(await isAdmin(userId))) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get('courseId');
+
+    if (courseId) {
+      // Get specific course
+      const course = await db.course.findFirst({
+        where: { 
+          id: courseId,
+          isDefault: true 
+        },
+        include: {
+          questions: {
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
+        }
+      });
+
+      if (!course) {
+        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        course,
+        questionsCount: course.questions.length
+      });
+    } else {
+      // Get all default courses
+      const defaultCourses = await db.course.findMany({
+        where: { isDefault: true },
+        include: {
+          questions: {
+            orderBy: {
+              createdAt: 'desc'
+            }
+          },
+          _count: {
+            select: { questions: true }
+          }
+        },
+        orderBy: {
+          createdAt: 'asc'
+        }
+      });
+
+      return NextResponse.json({
+        courses: defaultCourses,
+        totalCourses: defaultCourses.length,
+        totalQuestions: defaultCourses.reduce((sum, course) => sum + course.questions.length, 0)
+      });
+    }
 
   } catch (error) {
-    console.error('Error fetching admin questions:', error);
+    console.error('Error fetching admin data:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch questions' },
+      { error: 'Failed to fetch data' },
       { status: 500 }
     );
   }
@@ -74,24 +104,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    //TODO: Fix this logic later
-    // const { userId } = await auth();
+    const { userId } = await auth();
     
-    // if (!userId) {
-    //   return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 });
-    // }
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized - Authentication required' }, { status: 401 });
+    }
 
-    // if (!(await isAdmin(userId))) {
-    //   return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
-    // }
+    if (!(await isAdmin(userId))) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
 
     const body = await request.json();
-    const { title, topics, urls, difficulty } = body;
+    const { title, topics, urls, difficulty, courseId } = body;
 
     // Validate required fields
-    if (!title || !topics || !urls || !difficulty) {
+    if (!title || !topics || !urls || !difficulty || !courseId) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, topics, urls, difficulty' },
+        { error: 'Missing required fields: title, topics, urls, difficulty, courseId' },
         { status: 400 }
       );
     }
@@ -113,25 +142,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find the default course
-    const defaultCourse = await db.course.findFirst({
-      where: { isDefault: true }
+    // Find the specified default course
+    const course = await db.course.findFirst({
+      where: { 
+        id: courseId,
+        isDefault: true 
+      }
     });
 
-    if (!defaultCourse) {
+    if (!course) {
       return NextResponse.json(
-        { error: 'Default course not found. Please create it first.' },
+        { error: 'Default course not found' },
         { status: 404 }
       );
     }
 
-    // Check if question with same title already exists
+    // Check if question with same title already exists in this course
     const existingQuestion = await db.question.findFirst({
       where: {
         title: title.trim(),
         courses: {
           some: {
-            id: defaultCourse.id
+            id: courseId
           }
         }
       }
@@ -139,12 +171,12 @@ export async function POST(request: NextRequest) {
 
     if (existingQuestion) {
       return NextResponse.json(
-        { error: 'A question with this title already exists in the default course' },
+        { error: 'A question with this title already exists in this course' },
         { status: 409 }
       );
     }
 
-    // Create the question and connect it to the default course
+    // Create the question and connect it to the specified course
     const question = await db.question.create({
       data: {
         title: title.trim(),
@@ -152,7 +184,7 @@ export async function POST(request: NextRequest) {
         urls: urls.filter((url: string) => url.trim()),
         difficulty,
         courses: {
-          connect: { id: defaultCourse.id }
+          connect: { id: courseId }
         }
       },
       include: {
@@ -184,34 +216,37 @@ export async function DELETE(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { questionId } = body;
+    const { questionId, courseId } = body;
 
-    if (!questionId) {
+    if (!questionId || !courseId) {
       return NextResponse.json(
-        { error: 'Question ID is required' },
+        { error: 'Question ID and Course ID are required' },
         { status: 400 }
       );
     }
 
-    // Find the default course first
-    const defaultCourse = await db.course.findFirst({
-      where: { isDefault: true }
+    // Find the specified default course
+    const course = await db.course.findFirst({
+      where: { 
+        id: courseId,
+        isDefault: true 
+      }
     });
 
-    if (!defaultCourse) {
+    if (!course) {
       return NextResponse.json(
         { error: 'Default course not found' },
         { status: 404 }
       );
     }
 
-    // Find the question and verify it's in the default course
+    // Find the question and verify it's in the specified course
     const question = await db.question.findFirst({
       where: {
         id: questionId,
         courses: {
           some: {
-            id: defaultCourse.id
+            id: courseId
           }
         }
       },
@@ -222,13 +257,13 @@ export async function DELETE(request: NextRequest) {
 
     if (!question) {
       return NextResponse.json(
-        { error: 'Question not found in default course' },
+        { error: 'Question not found in specified course' },
         { status: 404 }
       );
     }
 
-    // If question is only in the default course, delete it completely
-    // If it's in other courses too, just disconnect from default course
+    // If question is only in this course, delete it completely
+    // If it's in other courses too, just disconnect from this course
     if (question.courses.length === 1) {
       await db.question.delete({
         where: { id: questionId }
@@ -238,7 +273,7 @@ export async function DELETE(request: NextRequest) {
         where: { id: questionId },
         data: {
           courses: {
-            disconnect: { id: defaultCourse.id }
+            disconnect: { id: courseId }
           }
         }
       });
@@ -268,34 +303,37 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { questionId, title, topics, urls, difficulty } = body;
+    const { questionId, title, topics, urls, difficulty, courseId } = body;
 
-    if (!questionId) {
+    if (!questionId || !courseId) {
       return NextResponse.json(
-        { error: 'Question ID is required' },
+        { error: 'Question ID and Course ID are required' },
         { status: 400 }
       );
     }
 
-    // Find the default course
-    const defaultCourse = await db.course.findFirst({
-      where: { isDefault: true }
+    // Find the specified default course
+    const course = await db.course.findFirst({
+      where: { 
+        id: courseId,
+        isDefault: true 
+      }
     });
 
-    if (!defaultCourse) {
+    if (!course) {
       return NextResponse.json(
         { error: 'Default course not found' },
         { status: 404 }
       );
     }
 
-    // Verify the question exists in the default course
+    // Verify the question exists in the specified course
     const existingQuestion = await db.question.findFirst({
       where: {
         id: questionId,
         courses: {
           some: {
-            id: defaultCourse.id
+            id: courseId
           }
         }
       }
@@ -303,7 +341,7 @@ export async function PUT(request: NextRequest) {
 
     if (!existingQuestion) {
       return NextResponse.json(
-        { error: 'Question not found in default course' },
+        { error: 'Question not found in specified course' },
         { status: 404 }
       );
     }

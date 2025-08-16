@@ -8,7 +8,6 @@ interface CourseStatsProps {
 }
 
 export function CourseStats({ course }: CourseStatsProps) {
-  console.log('🚀 ~ file: course-stats.tsx:13 ~ CourseStats ~ course:', course);
   const totalQuestions = course.questions.length;
   const easyCount = course.questions.filter(q => q.difficulty.toLocaleUpperCase() === 'EASY').length;
   const mediumCount = course.questions.filter(q => q.difficulty.toLocaleUpperCase() === 'MEDIUM').length;

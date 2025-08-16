@@ -3,9 +3,28 @@
 import { UserButton, SignInButton, SignUpButton, useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 
 export function Navbar() {
   const { isSignedIn, user } = useUser();
+
+  const { data: isAdminUser } = useQuery({
+    queryKey: ['is-admin', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const userEmail = user.emailAddresses[0]?.emailAddress;
+      const adminEmailsStr = process.env.NEXT_PUBLIC_ADMIN_EMAILS; // Note: NEXT_PUBLIC_ prefix
+      if (!adminEmailsStr || !userEmail) return false;
+      
+      const adminEmails = adminEmailsStr
+        .split(',')
+        .map(email => email.trim())
+        .filter(email => email.length > 0);
+      
+      return adminEmails.includes(userEmail);
+    },
+    enabled: !!user
+  });
 
   return (
     <nav className="border-b bg-white">
@@ -19,9 +38,17 @@ export function Navbar() {
           <div className="flex items-center space-x-4">
             {isSignedIn ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  Welcome, {user.firstName || user.emailAddresses[0].emailAddress}
-                </span>
+                {isAdminUser ? (
+                  <Link href="/admin">
+                    <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300">
+                      Admin Panel
+                    </Button>
+                  </Link>
+                ) : (
+                  <span className="text-sm text-gray-600">
+                    Welcome, {user.firstName || user.emailAddresses[0].emailAddress}
+                  </span>
+                )}
                 <UserButton 
                   afterSignOutUrl="/"
                   appearance={{

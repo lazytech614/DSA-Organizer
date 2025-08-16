@@ -6,6 +6,8 @@ import { CourseWithQuestions } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, MoreVertical, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 
 interface DashboardHeaderProps {
   selectedCourse: CourseWithQuestions | null;
@@ -14,7 +16,26 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardHeaderProps) {
   const { isSignedIn } = useUser();
+  const { user } = useUser();
   const [showSearch, setShowSearch] = useState(false);
+
+  const { data: isAdminUser } = useQuery({
+    queryKey: ['is-admin', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const userEmail = user.emailAddresses[0]?.emailAddress;
+      const adminEmailsStr = process.env.NEXT_PUBLIC_ADMIN_EMAILS; // Note: NEXT_PUBLIC_ prefix
+      if (!adminEmailsStr || !userEmail) return false;
+      
+      const adminEmails = adminEmailsStr
+        .split(',')
+        .map(email => email.trim())
+        .filter(email => email.length > 0);
+      
+      return adminEmails.includes(userEmail);
+    },
+    enabled: !!user
+  });
 
   return (
     <div className="bg-gray-800 border-b border-gray-700">
@@ -41,14 +62,22 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
           {/* Actions */}
           <div className="flex items-center space-x-2 ml-4">
             {/* Subscriptions */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:flex"
-            >
-              <Star className="w-4 h-4 mr-1" />
-              <span>Get Pro</span>
-            </Button>
+            {isAdminUser ? (
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300">
+                    Admin Panel
+                  </Button>
+                </Link>
+              ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+              >
+                <Star className="w-4 h-4 mr-1" />
+                <span>Get Pro</span>
+              </Button>
+            ) }
             {/* Mobile More Options */}
             {isMobile && (
               <Button
