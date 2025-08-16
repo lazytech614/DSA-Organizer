@@ -2,24 +2,28 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Question } from '@prisma/client';
 import { QuestionItem } from '@/components/course/question-item';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { QuestionWithSolvedStatus } from '@/types';
 
 interface TopicSectionProps {
   topic: string;
-  questions: Question[];
+  questions: QuestionWithSolvedStatus[];
   stepNumber: number;
-  courseId?: string; // Add this prop
+  courseId?: string;
 }
 
 export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const easyCount = questions.filter(q => q.difficulty === 'EASY').length;
-  const mediumCount = questions.filter(q => q.difficulty === 'MEDIUM').length;
-  const hardCount = questions.filter(q => q.difficulty === 'HARD').length;
+  const easyCount = questions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
+  const mediumCount = questions.filter(q => q.difficulty.toUpperCase() === 'MEDIUM').length;
+  const hardCount = questions.filter(q => q.difficulty.toUpperCase() === 'HARD').length;
+
+  // Calculate completed questions more efficiently
+  const completedCount = questions.filter(q => q.isSolved).length;
+  const progressPercentage = questions.length > 0 ? (completedCount / questions.length) * 100 : 0;
 
   return (
     <Card className="bg-gray-800 border-gray-700">
@@ -61,12 +65,24 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
             </div>
           </div>
 
+          {/* Fixed Progress Bar */}
           <div className="hidden sm:flex items-center space-x-4 flex-shrink-0">
-            <div className="text-orange-400 font-medium text-sm">
-              0 / {questions.length}
+            <div className={`font-medium text-sm ${
+              completedCount === questions.length && questions.length > 0
+                ? 'text-green-400' 
+                : 'text-orange-400'
+            }`}>
+              {completedCount} / {questions.length}
             </div>
-            <div className="w-16 lg:w-24 bg-gray-600 rounded-full h-2">
-              <div className="bg-orange-500 h-2 rounded-full w-0" />
+            <div className="w-16 lg:w-24 bg-gray-600 rounded-full h-2 overflow-hidden">
+              <div 
+                className={`h-2 rounded-full transition-all duration-300 ease-in-out ${
+                  completedCount === questions.length && questions.length > 0
+                    ? 'bg-green-500' 
+                    : 'bg-orange-500'
+                }`}
+                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+              />
             </div>
           </div>
         </button>
@@ -80,7 +96,7 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
                 key={question.id}
                 question={question}
                 index={index + 1}
-                courseId={courseId} // Pass courseId here
+                courseId={courseId} 
               />
             ))}
           </div>
