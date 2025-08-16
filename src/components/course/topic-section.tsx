@@ -30,23 +30,18 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
   const { user } = useUser();
   const course = courses?.find(c => c.id === courseId);
 
-  // ✅ Get live questions data with solved status
+  // ✅ FIXED: Use the pre-filtered questions passed as props and only enrich with user data
   const liveQuestions = useMemo(() => {
-    if (!course || !courseId) return questions || [];
-    
-    // Filter course questions by the current topic and enrich with solved status
-    const topicQuestions = course.questions
-      .filter(q => q.topics.some(t => t.toLowerCase() === topic.toLowerCase()))
-      .map(question => ({
-        ...question,
-        // Check if question is solved by looking in user's solved questions
-        isSolved: userInfo?.solvedQuestions?.some(sq => sq.questionId === question.id) ?? question.isSolved ?? false,
-        // Check if question is bookmarked
-        isBookmarked: userInfo?.bookmarkedQuestions?.includes(question.id) ?? question.isBookmarked ?? false
-      }));
-    
-    return topicQuestions.length > 0 ? topicQuestions : (questions || []);
-  }, [course, questions, topic, courseId, userInfo]);
+    // Use the already filtered questions from CourseContent
+    // Just enrich them with user-specific data (solved/bookmarked status)
+    return (questions || []).map(question => ({
+      ...question,
+      // Check if question is solved by looking in user's solved questions
+      isSolved: userInfo?.solvedQuestions?.some(sq => sq.questionId === question.id) ?? question.isSolved ?? false,
+      // Check if question is bookmarked
+      isBookmarked: userInfo?.bookmarkedQuestions?.includes(question.id) ?? question.isBookmarked ?? false
+    }));
+  }, [questions, userInfo]);
 
   // ✅ Reset optimistic count when live data changes
   useEffect(() => {
@@ -58,9 +53,9 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
   // ✅ Calculate stats with animations trigger
   const stats = useMemo(() => {
     const totalCount = liveQuestions.length + optimisticQuestionCount;
-    const easyCount = liveQuestions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
-    const mediumCount = liveQuestions.filter(q => q.difficulty.toUpperCase() === 'MEDIUM').length;
-    const hardCount = liveQuestions.filter(q => q.difficulty.toUpperCase() === 'HARD').length;
+    const easyCount = liveQuestions.filter(q => q.difficulty?.toString().toUpperCase() === 'EASY').length;
+    const mediumCount = liveQuestions.filter(q => q.difficulty?.toString().toUpperCase() === 'MEDIUM').length;
+    const hardCount = liveQuestions.filter(q => q.difficulty?.toString().toUpperCase() === 'HARD').length;
     const completedCount = liveQuestions.filter(q => q.isSolved).length;
     const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
     
@@ -100,6 +95,11 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
 
   // ✅ Check if user can add questions to this topic
   const canAddQuestions = user && course && !course.isDefault;
+
+  // ✅ Don't render empty sections
+  if (liveQuestions.length === 0 && optimisticQuestionCount === 0) {
+    return null;
+  }
 
   return (
     <Card className={`bg-gray-800 border-gray-700 transition-all duration-300 ${

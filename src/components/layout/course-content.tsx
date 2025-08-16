@@ -6,7 +6,7 @@ import { TopicSection } from '@/components/course/topic-section';
 import { CourseStats } from '@/components/course/course-stats';
 import { AddQuestionDialog } from '@/components/dialogs/add-question-dialog';
 import { Button } from '@/components/ui/button';
-import { Settings, Plus, BookmarkCheck, BookmarkIcon } from 'lucide-react';
+import { Settings, Plus, BookmarkCheck, BookmarkIcon, FilterIcon } from 'lucide-react';
 import { useBookmarks } from '@/hooks/useBookamrks';
 import { useUser } from '@clerk/nextjs';
 
@@ -158,7 +158,10 @@ export function CourseContent({ course }: CourseContentProps) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           {/* Difficulty Filter */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4">
-            <span className="text-sm text-gray-400 whitespace-nowrap">Filter by difficulty:</span>
+            <div className='flex gap-x-2 items-center'>
+              <FilterIcon className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-400 whitespace-nowrap">Filter by difficulty:</span>
+            </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0">
               {['all', 'easy', 'medium', 'hard'].map(difficulty => (
                 <Button
