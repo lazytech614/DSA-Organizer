@@ -14,7 +14,17 @@ export async function GET() {
           user: true
         }
       });
-      return NextResponse.json(defaultCourses);
+      
+      // Add isSolved: false for all questions when user is not authenticated
+      const coursesWithSolvedStatus = defaultCourses.map(course => ({
+        ...course,
+        questions: course.questions.map(question => ({
+          ...question,
+          isSolved: false
+        }))
+      }));
+      
+      return NextResponse.json(coursesWithSolvedStatus);
     }
 
     const prismaUser = await db.user.findUnique({
@@ -29,9 +39,20 @@ export async function GET() {
           user: true
         }
       });
-      return NextResponse.json(defaultCourses);
+      
+      // Add isSolved: false for all questions when user doesn't exist in DB
+      const coursesWithSolvedStatus = defaultCourses.map(course => ({
+        ...course,
+        questions: course.questions.map(question => ({
+          ...question,
+          isSolved: false
+        }))
+      }));
+      
+      return NextResponse.json(coursesWithSolvedStatus);
     }
 
+    // Fetch courses
     const courses = await db.course.findMany({
       where: {
         OR: [
@@ -45,7 +66,29 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json(courses);
+    // Get all solved question IDs for this user
+    const solvedQuestions = await db.userQuestionSolved.findMany({
+      where: {
+        userId: prismaUser.id
+      },
+      select: {
+        questionId: true
+      }
+    });
+
+    // Create a Set for O(1) lookup
+    const solvedQuestionIds = new Set(solvedQuestions.map(sq => sq.questionId));
+
+    // Add isSolved boolean to each question
+    const coursesWithSolvedStatus = courses.map(course => ({
+      ...course,
+      questions: course.questions.map(question => ({
+        ...question,
+        isSolved: solvedQuestionIds.has(question.id)
+      }))
+    }));
+
+    return NextResponse.json(coursesWithSolvedStatus);
   } catch (error) {
     console.error('Error fetching courses:', error);
     return NextResponse.json(

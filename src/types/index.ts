@@ -4,8 +4,12 @@ export type QuestionWithCourses = Question & {
   courses: Course[];
 };
 
+export type QuestionWithSolvedStatus = Question & {
+  isSolved: boolean;
+};
+
 export type CourseWithQuestions = Course & {
-  questions: Question[];
+  questions: QuestionWithSolvedStatus[];
   user?: User | null;
 };
 

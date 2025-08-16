@@ -43,20 +43,10 @@ export function AddQuestionDialog({ courseId, disabled = false }: AddQuestionDia
 
   // Debug: Log selectedTopics whenever it changes
   useEffect(() => {
-    console.log('🔍 selectedTopics changed:', selectedTopics);
   }, [selectedTopics]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('🔍 Form submission data:', {
-      title: title.trim(),
-      selectedTopics,
-      selectedTopicsLength: selectedTopics.length,
-      urls,
-      difficulty,
-      courseId
-    });
 
     if (!title.trim()) {
       toast.error('Question title is required');
@@ -102,7 +92,6 @@ export function AddQuestionDialog({ courseId, disabled = false }: AddQuestionDia
     }
   };
 
-  // ✅ FIXED: Use functional update pattern
   const addTopic = (topic: string) => {
     setSelectedTopics(prevTopics => {
       if (!prevTopics.includes(topic)) {
@@ -117,7 +106,6 @@ export function AddQuestionDialog({ courseId, disabled = false }: AddQuestionDia
     setTopicSearch('');
   };
 
-  // ✅ FIXED: Use functional update pattern
   const removeTopic = (topic: string) => {
     setSelectedTopics(prevTopics => {
       console.log('🗑️ Removing topic:', topic, 'Previous topics:', prevTopics);
@@ -197,7 +185,6 @@ export function AddQuestionDialog({ courseId, disabled = false }: AddQuestionDia
                       key={topic}
                       className="cursor-pointer p-1 hover:bg-gray-100 rounded"
                       onClick={() => {
-                        console.log('🖱️ Clicked on topic:', topic);
                         addTopic(topic);
                       }}
                     >
@@ -213,7 +200,6 @@ export function AddQuestionDialog({ courseId, disabled = false }: AddQuestionDia
                     <X
                       className="w-3 h-3 cursor-pointer"
                       onClick={() => {
-                        console.log('🖱️ Clicked remove topic:', topic);
                         removeTopic(topic);
                       }}
                     />

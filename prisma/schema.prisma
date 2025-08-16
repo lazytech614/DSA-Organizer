@@ -27,7 +27,7 @@ model User {
   name        String?
   email       String?  @unique
   courses     Course[]
-  solvedQuestions UserQuestionSolved[] // New relation
+  solvedQuestions UserQuestionSolved[] 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -47,7 +47,6 @@ model Course {
   @@map("courses")
 }
 
-// New junction table to track solved questions
 model UserQuestionSolved {
   id          String   @id @default(cuid())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -56,7 +55,7 @@ model UserQuestionSolved {
   questionId  String
   solvedAt    DateTime @default(now())
   
-  @@unique([userId, questionId]) // Prevent duplicate entries
+  @@unique([userId, questionId]) 
   @@map("user_questions_solved")
 }
 
