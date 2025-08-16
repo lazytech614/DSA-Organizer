@@ -123,7 +123,7 @@ export function CourseContent({ course }: CourseContentProps) {
       {/* Course Header */}
       <div className="bg-gray-800 border-b border-gray-700 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
-          <div className="flex items-center space-x-4">
+          <div className="w-full flex justify-between items-center space-x-4">
             <div>
               <h2 className="text-lg font-semibold">Course Overview</h2>
               {(showBookmarkedOnly || selectedDifficulty !== 'all') && (
