@@ -16,7 +16,7 @@ model Question {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   courses     Course[]   @relation("CourseQuestions")
-  solvedBy    UserQuestionSolved[] // New relation
+  solvedBy    UserQuestionSolved[] 
   
   @@map("questions")
 }
@@ -28,6 +28,7 @@ model User {
   email       String?  @unique
   courses     Course[]
   solvedQuestions UserQuestionSolved[] 
+  bookmarkedQuestions String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
