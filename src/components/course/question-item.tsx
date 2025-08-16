@@ -1,7 +1,7 @@
 'use client';
 
 import { Question } from '@prisma/client';
-import { ExternalLink, CheckCircle, Circle } from 'lucide-react';
+import { ExternalLink, CheckCircle, Circle, Bookmark } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useMarkQuestionSolved, useUnmarkQuestionSolved, useIsQuestionSolved } from '@/hooks/useSolvedQuestions';
@@ -51,19 +51,13 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-gray-700 last:border-b-0 hover:bg-gray-700/30 transition-colors gap-3 sm:gap-4">
       <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
         {/* Question Number */}
-        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 transition-colors ${
-          isSolved 
-            ? 'bg-green-600 text-white' 
-            : 'bg-gray-600 text-gray-300'
-        }`}>
+        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 transition-colors`}>
           {index}
         </div>
 
         {/* Question Info */}
         <div className="flex-1 min-w-0">
-          <h4 className={`font-medium truncate text-sm sm:text-base transition-colors ${
-            isSolved ? 'text-green-400 line-through' : 'text-white'
-          }`}>
+          <h4 className={`font-medium truncate text-sm sm:text-base transition-colors`}>
             {question.title}
           </h4>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
@@ -120,6 +114,16 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
             <span className="text-xs text-gray-500">+{question.urls.length - 2}</span>
           )}
         </div>
+
+        {/* Bookkmark question */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1 sm:p-2 flex-shrink-0 transition-colors text-gray-400 hover:text-white"
+          title="Bookmark this question"
+        >
+          <Bookmark className="w-4 h-4" />
+        </Button>
 
         {/* Completion Status Toggle */}
         <Button

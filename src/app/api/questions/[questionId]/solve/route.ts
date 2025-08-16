@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
+  { params }: { params: { questionId: string } }
 ) {
   try {
     const { userId: clerkUserId } = await auth();
@@ -11,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const  questionId = request.nextUrl.searchParams.get('questionId') || '';
+    const { questionId } = params;
 
     // Get the prisma user
     const prismaUser = await db.user.findUnique({
