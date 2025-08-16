@@ -12,11 +12,14 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 
-  // Disable the no-explicit-any rule for TypeScript files
+  // Disable specific rules for JS/TS and JSX/TSX files
   {
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
     rules: {
+      // turn off explicit any warnings/errors
       "@typescript-eslint/no-explicit-any": "off",
+      // allow unescaped characters in JSX (e.g. apostrophes, >, etc.)
+      "react/no-unescaped-entities": "off",
     },
   },
 ];
