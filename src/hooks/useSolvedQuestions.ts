@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@clerk/nextjs';
+import { json } from 'stream/consumers';
 
 export const useSolvedQuestions = (courseId?: string) => {
   const { user } = useUser();

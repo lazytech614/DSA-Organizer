@@ -126,7 +126,7 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
           size="sm"
           variant="ghost"
           onClick={handleToggleSolved}
-          disabled={isLoading || !user}
+          disabled={isLoading}
           className={`p-1 sm:p-2 flex-shrink-0 transition-colors ${
             isSolved 
               ? 'text-green-400 hover:text-green-300' 
