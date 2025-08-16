@@ -4,7 +4,7 @@ import { Question } from '@prisma/client';
 import { ExternalLink, CheckCircle, Circle, Bookmark, BookmarkCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useMarkQuestionSolved, useUnmarkQuestionSolved, useIsQuestionSolved } from '@/hooks/useSolvedQuestions';
+import { useMarkQuestionSolved, useUnmarkQuestionSolved } from '@/hooks/useSolvedQuestions';
 import { useBookmarkQuestion, useUnbookmarkQuestion, useIsQuestionBookmarked } from '@/hooks/useBookamrks';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -17,13 +17,18 @@ interface QuestionItemProps {
 
 export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
   const { user } = useUser();
-  const isSolved = question.isSolved || useIsQuestionSolved(question.id, courseId);
-  const isBookmarked = question.isBookmarked || useIsQuestionBookmarked(question.id);
   
+  // ✅ Call hooks unconditionally at the top level
+  const hookIsSolved = question.isSolved;
+  const hookIsBookmarked = useIsQuestionBookmarked(question.id);
   const markSolvedMutation = useMarkQuestionSolved();
   const unmarkSolvedMutation = useUnmarkQuestionSolved();
   const bookmarkMutation = useBookmarkQuestion();
   const unbookmarkMutation = useUnbookmarkQuestion();
+
+  // ✅ Use the data after hooks are called
+  const isSolved = question.isSolved ?? hookIsSolved ?? false;
+  const isBookmarked = question.isBookmarked ?? hookIsBookmarked ?? false;
 
   const difficultyColors = {
     EASY: 'text-green-400 border-green-400',
@@ -74,6 +79,8 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
 
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-gray-700 last:border-b-0 hover:bg-gray-700/30 transition-all duration-200 gap-3 sm:gap-4 ${
+      isSolved ? 'bg-green-500/5 border-l-2 border-l-green-500' : ''
+    } ${
       isBookmarked ? 'border-r-2 border-r-yellow-500' : ''
     }`}>
       <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
@@ -89,7 +96,9 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
         {/* Question Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`font-medium truncate text-sm sm:text-base transition-all duration-200`}>
+            <h4 className={`font-medium truncate text-sm sm:text-base transition-all duration-200 ${
+              isSolved ? 'text-green-400' : 'text-white'
+            }`}>
               {question.title}
             </h4>
             {isBookmarked && (
@@ -103,12 +112,24 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
             >
               {question.difficulty}
             </Badge>
+            <div className="flex flex-wrap items-center gap-1">
+              {question.topics.slice(0, 2).map((topic) => (
+                <Badge key={topic} variant="secondary" className="text-xs bg-gray-600">
+                  {topic}
+                </Badge>
+              ))}
+              {question.topics.length > 2 && (
+                <Badge variant="secondary" className="text-xs bg-gray-600">
+                  +{question.topics.length - 2}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-start sm:justify-end space-x-2 w-full sm:w-auto">
+      <div className="flex items-center justify-between sm:justify-end space-x-2 w-full sm:w-auto">
         {/* Practice Links */}
         <div className="flex items-center space-x-1 sm:space-x-2">
           {question.urls.slice(0, 2).map((url, urlIndex) => (
