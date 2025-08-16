@@ -71,7 +71,7 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
               ) : (
               <Button
                 variant="outline"
-                size="sm"
+                size={isMobile ? "sm" : "default"}
                 className="hidden sm:flex"
               >
                 <Star className="w-4 h-4 mr-1" />

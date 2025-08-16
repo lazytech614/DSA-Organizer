@@ -103,18 +103,6 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
             >
               {question.difficulty}
             </Badge>
-            <div className="flex flex-wrap items-center gap-1">
-              {question.topics.slice(0, 2).map((topic) => (
-                <Badge key={topic} variant="secondary" className="text-xs bg-gray-600">
-                  {topic}
-                </Badge>
-              ))}
-              {question.topics.length > 2 && (
-                <Badge variant="secondary" className="text-xs bg-gray-600">
-                  +{question.topics.length - 2}
-                </Badge>
-              )}
-            </div>
           </div>
         </div>
       </div>
