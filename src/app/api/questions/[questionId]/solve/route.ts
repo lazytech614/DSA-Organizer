@@ -20,6 +20,7 @@ export async function POST(
     });
 
     if (!prismaUser) {
+      console.log("💖💖User not found");
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 

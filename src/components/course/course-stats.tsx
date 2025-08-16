@@ -61,7 +61,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             </div>
             <div className="text-xs sm:text-sm text-gray-400">Easy</div>
             <div className="mt-2 bg-gray-600 rounded-full h-2">
-              <div className={`bg-green-500 h-2 rounded-full w-${easyProgressPercentage}%`} />
+              <div className={`bg-green-500 h-2 rounded-full`} style={{ width: `${easyProgressPercentage}%` }} />
             </div>
           </div>
         </CardContent>
@@ -76,7 +76,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             </div>
             <div className="text-xs sm:text-sm text-gray-400">Medium</div>
             <div className="mt-2 bg-gray-600 rounded-full h-2">
-              <div className="bg-yellow-500 h-2 rounded-full w-0" />
+              <div className={`bg-yellow-500 h-2 rounded-full`} style={{ width: `${mediumProgressPercentage}%` }} />
             </div>
           </div>
         </CardContent>
@@ -91,7 +91,7 @@ export function CourseStats({ course }: CourseStatsProps) {
             </div>
             <div className="text-xs sm:text-sm text-gray-400">Hard</div>
             <div className="mt-2 bg-gray-600 rounded-full h-2">
-              <div className="bg-red-500 h-2 rounded-full w-0" />
+              <div className={`bg-red-500 h-2 rounded-full`} style={{ width: `${hardProgressPercentage}%` }} />
             </div>
           </div>
         </CardContent>
