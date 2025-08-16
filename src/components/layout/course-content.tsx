@@ -77,9 +77,6 @@ export function CourseContent({ course }: CourseContentProps) {
               <AddQuestionDialog courseId={course.id} />
             )}
           </div>
-          <Button variant="ghost" size="sm" className="self-start sm:self-auto">
-            <Settings className="w-4 h-4" />
-          </Button>
         </div>
 
         <CourseStats course={course} />

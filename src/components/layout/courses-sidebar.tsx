@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronRight, ChevronDown, BookOpen, Plus, User } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
+import { SignInButton, useUser } from '@clerk/nextjs';
 import { CourseWithQuestions } from '@/types';
 import { Button } from '@/components/ui/button';
 import { AddCourseDialog } from '@/components/dialogs/add-course-dialog';
@@ -84,7 +84,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
         </div>
 
         {/* User Courses Section */}
-        {isSignedIn && (
+        {isSignedIn ? (
           <div>
             <button
               onClick={() => toggleSection('user')}
@@ -124,6 +124,23 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
                 </div>
               </div>
             )}
+          </div>
+        ) : (
+          <div className="bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg p-4 flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-blue-300 font-medium mb-1">Create Custom Courses</h4>
+              <p className="text-gray-300 text-sm mb-3">Sign in to add new courses to organize your questions and track your learning progress.</p>
+              <SignInButton>
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition-colors">
+                  Create Now
+                </Button>
+              </SignInButton>
+            </div>
           </div>
         )}
       </div>
