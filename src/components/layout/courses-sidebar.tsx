@@ -81,7 +81,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
 
     if (isAtLimit) {
       return (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 space-y-2">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-red-400" />
             <h4 className="text-red-300 font-medium text-sm">Limit Reached</h4>
@@ -89,6 +89,16 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
           <p className="text-xs text-red-200 mb-3">
             You've used all {limits.maxCourses} course slots. Upgrade to create unlimited courses!
           </p>
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>Questions solved:</span>
+            <span className="font-medium text-gray-300">{stats.totalQuestionsSolved}</span>
+          </div>
+          {stats.streakDays > 0 && (
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Current streak:</span>
+              <span className="font-medium text-green-400">{stats.streakDays} days 🔥</span>
+            </div>
+          )}
           <Link href="/pricing">
             <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-7">
               <Crown className="w-3 h-3 mr-1" />
