@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
+import { withSubscriptionLimit } from '@/lib/middleware/subscription';
 
 export async function GET() {
   try {
@@ -99,27 +100,24 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Check subscription limits first
+  const limitResponse = await withSubscriptionLimit(request, 'CREATE_COURSE');
+  if (limitResponse) return limitResponse;
+
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const user = await currentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
+    
     const dbUser = await db.user.upsert({
-      where: { clerkId: userId },
+      where: { clerkId: userId as string },
       update: {
-        email: user.emailAddresses[0]?.emailAddress,
-        name: `${user.firstName} ${user.lastName}`.trim()
+        email: user?.emailAddresses[0]?.emailAddress,
+        name: `${user?.firstName} ${user?.lastName}`.trim()
       },
       create: {
-        clerkId: userId,
-        email: user.emailAddresses[0]?.emailAddress,
-        name: `${user.firstName} ${user.lastName}`.trim()
+        clerkId: userId as string,
+        email: user?.emailAddresses[0]?.emailAddress,
+        name: `${user?.firstName} ${user?.lastName}`.trim()
       }
     });
 
@@ -129,21 +127,22 @@ export async function POST(request: NextRequest) {
     const course = await db.course.create({
       data: {
         title,
-        userId: dbUser.id, 
+        userId: dbUser.id,
         isDefault: false
-      },
-      include: {
-        questions: true,
-        user: true
+      }
+    });
+
+    // ✅ Update user's course count
+    await db.user.update({
+      where: { id: dbUser.id },
+      data: {
+        totalCoursesCreated: { increment: 1 }
       }
     });
 
     return NextResponse.json(course, { status: 201 });
   } catch (error) {
     console.error('Error creating course:', error);
-    return NextResponse.json(
-      { error: 'Failed to create course' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create course' }, { status: 500 });
   }
 }

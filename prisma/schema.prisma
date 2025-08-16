@@ -29,6 +29,18 @@ model User {
   courses     Course[]
   solvedQuestions UserQuestionSolved[] 
   bookmarkedQuestions String[] @default([])
+
+  // ✅ Subscription fields
+  subscriptionType    SubscriptionType @default(FREE)
+  subscriptionStatus  SubscriptionStatus @default(ACTIVE)
+  subscriptionStart   DateTime?
+  subscriptionEnd     DateTime?
+  stripeCustomerId    String?
+  stripeSubscriptionId String?
+
+  // ✅ Usage tracking for limits
+  totalCoursesCreated Int      @default(0)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -42,6 +54,10 @@ model Course {
   user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String?
   questions   Question[] @relation("CourseQuestions")
+
+  // ✅ Usage tracking
+  questionCount Int      @default(0) // Cached count for performance
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -60,8 +76,38 @@ model UserQuestionSolved {
   @@map("user_questions_solved")
 }
 
+model SubscriptionPlan {
+  id                String           @id @default(cuid())
+  type              SubscriptionType @unique
+  name              String
+  description       String?
+  maxCourses        Int              // -1 for unlimited
+  maxQuestionsPerCourse Int          // -1 for unlimited
+  monthlyPrice      Decimal?
+  yearlyPrice       Decimal?
+  stripePriceId     String?          // Stripe price ID
+  features          String[]         // Array of feature names
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("subscription_plans")
+}
+
 enum Difficulty {
   EASY
   MEDIUM
   HARD
+}
+
+enum SubscriptionType {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
 }
