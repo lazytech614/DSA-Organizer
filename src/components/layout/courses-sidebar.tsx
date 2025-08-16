@@ -195,7 +195,7 @@ export function CoursesSidebar({
           </div>
           
           {/* Close button with hover effect */}
-          {isMobile && onClose && (
+          {/* {isMobile && onClose && (
             <Button
               variant="ghost"
               size="sm"
@@ -205,7 +205,7 @@ export function CoursesSidebar({
             >
               <X className="w-5 h-5" />
             </Button>
-          )}
+          )} */}
         </div>
       </div>
 
