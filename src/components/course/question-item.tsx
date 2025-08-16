@@ -1,13 +1,14 @@
 'use client';
 
 import { Question } from '@prisma/client';
-import { ExternalLink, CheckCircle, Circle, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ExternalLink, CheckCircle, Circle, Bookmark, BookmarkCheck, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useMarkQuestionSolved, useUnmarkQuestionSolved } from '@/hooks/useSolvedQuestions';
 import { useBookmarkQuestion, useUnbookmarkQuestion } from '@/hooks/useBookamrks';
 import { useCourses } from '@/hooks/useCourses';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { DeleteQuestionDialog } from '@/components/dialogs/delete-question-dialog';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
@@ -15,9 +16,11 @@ interface QuestionItemProps {
   question: Question & { isSolved?: boolean; isBookmarked?: boolean };
   index: number;
   courseId?: string;
+  courseTitle?: string;
+  showDelete?: boolean; // Control when to show delete button
 }
 
-export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
+export function QuestionItem({ question, index, courseId, courseTitle, showDelete = false }: QuestionItemProps) {
   const { user } = useUser();
   
   // ✅ Get live data from React Query
@@ -31,6 +34,9 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
   // ✅ Use live data or fallback to props
   const isSolved = currentQuestion?.isSolved ?? question.isSolved ?? false;
   const isBookmarked = userInfo?.bookmarkedQuestions.includes(question.id) ?? question.isBookmarked ?? false;
+  
+  // ✅ Check if user can delete this question (only from their own courses)
+  const canDelete = showDelete && currentCourse && !currentCourse.isDefault && user;
   
   // ✅ Initialize mutation hooks
   const markSolvedMutation = useMarkQuestionSolved();
@@ -167,6 +173,23 @@ export function QuestionItem({ question, index, courseId }: QuestionItemProps) {
             <span className="text-xs text-gray-500">+{question.urls.length - 2}</span>
           )}
         </div>
+
+        {/* Delete Button (only for user's own courses) */}
+        {canDelete && (
+          <DeleteQuestionDialog 
+            question={{ ...question, isSolved, isBookmarked }} 
+            courseTitle={courseTitle}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:text-red-400 p-1 sm:p-2 transition-colors"
+              title="Delete question"
+            >
+              <Trash className="w-3 h-3 sm:w-4 sm:h-4" />
+            </Button>
+          </DeleteQuestionDialog>
+        )}
 
         {/* Bookmark Button */}
         <Button

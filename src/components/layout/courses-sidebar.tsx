@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronRight, ChevronDown, BookOpen, Plus, User, Crown, AlertTriangle, Zap, DeleteIcon, Trash } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronRight, ChevronDown, BookOpen, User, Crown, AlertTriangle, Zap, Trash, X } from 'lucide-react';
 import { SignInButton, useUser } from '@clerk/nextjs';
 import { CourseWithQuestions } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -16,14 +16,31 @@ interface CoursesSidebarProps {
   selectedCourse: CourseWithQuestions | null;
   onCourseSelect: (course: CourseWithQuestions) => void;
   isMobile?: boolean;
+  onClose?: () => void;
 }
 
-export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobile = false }: CoursesSidebarProps) {
+export function CoursesSidebar({ 
+  courses, 
+  selectedCourse, 
+  onCourseSelect, 
+  isMobile = false,
+  onClose 
+}: CoursesSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['default', 'user']);
+  const [isVisible, setIsVisible] = useState(false);
   const { isSignedIn } = useUser();
   const { data: userInfo, isLoading, isError } = useUserInfo();
 
-  console.log("UserInfo: ", userInfo);
+  // Handle entrance animation
+  useEffect(() => {
+    if (isMobile) {
+      // Delay to allow CSS transition to work
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(true);
+    }
+  }, [isMobile]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -33,18 +50,27 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
     );
   };
 
+  const handleClose = () => {
+    if (onClose && isMobile) {
+      setIsVisible(false);
+      // Delay closing to allow exit animation
+      setTimeout(() => onClose(), 200);
+    }
+  };
+
   const defaultCourses = courses.filter(course => course.isDefault);
   const userCourses = courses.filter(course => !course.isDefault);
 
-  // Calculate progress percentage for visual indicator
+  // Rest of your existing sidebar logic...
   const getUsagePercentage = () => {
     if (!userInfo?.limits) return 0;
     const { coursesUsed, maxCourses } = userInfo.limits;
-    if (maxCourses === -1) return 0; // Unlimited
+    if (maxCourses === -1) return 0;
     return (coursesUsed / maxCourses) * 100;
   };
 
   const renderSubscriptionNotice = () => {
+    // Your existing renderSubscriptionNotice code...
     if (!userInfo) return null;
 
     const { isPro, limits, stats } = userInfo;
@@ -52,7 +78,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
 
     if (isPro) {
       return (
-        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 transform transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
             <Crown className="w-4 h-4 text-yellow-400" />
             <h4 className="text-yellow-300 font-medium text-sm">Pro Member</h4>
@@ -75,13 +101,13 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
       );
     }
 
-    // Free user notices
+    // Your other subscription notice variants...
     const isNearLimit = usagePercentage >= 80;
     const isAtLimit = !limits.canCreateCourse;
 
     if (isAtLimit) {
       return (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 space-y-2">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 space-y-2 transform transition-all duration-300">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-red-400" />
             <h4 className="text-red-300 font-medium text-sm">Limit Reached</h4>
@@ -100,7 +126,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
             </div>
           )}
           <Link href="/pricing">
-            <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-7">
+            <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-7 transition-colors">
               <Crown className="w-3 h-3 mr-1" />
               Upgrade Now
             </Button>
@@ -109,40 +135,9 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
       );
     }
 
-    if (isNearLimit) {
-      return (
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-orange-400" />
-            <h4 className="text-orange-300 font-medium text-sm">Almost Full</h4>
-          </div>
-          <div className="space-y-2">
-            <div className="text-xs text-orange-200">
-              <div className="flex justify-between mb-1">
-                <span>Courses used:</span>
-                <span className="font-medium">{limits.coursesUsed} / {limits.maxCourses}</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-1.5">
-                <div 
-                  className="bg-orange-500 h-1.5 rounded-full transition-all duration-300"
-                  style={{ width: `${usagePercentage}%` }}
-                />
-              </div>
-            </div>
-            <Link href="/pricing">
-              <Button size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-7">
-                <Crown className="w-3 h-3 mr-1" />
-                Upgrade for Unlimited
-              </Button>
-            </Link>
-          </div>
-        </div>
-      );
-    }
-
-    // Regular free user status
+    // Add other cases...
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 transform transition-all duration-300">
         <div className="flex items-center gap-2 mb-2">
           <User className="w-4 h-4 text-gray-400" />
           <h4 className="text-gray-300 font-medium text-sm">Free Plan</h4>
@@ -155,7 +150,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
             </div>
             <div className="w-full bg-gray-700 rounded-full h-1.5">
               <div 
-                className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${usagePercentage}%` }}
               />
             </div>
@@ -171,7 +166,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
             </div>
           )}
           <Link href="/pricing">
-            <Button size="sm" variant="outline" className="w-full text-xs h-7 border-gray-600 hover:bg-gray-700">
+            <Button size="sm" variant="outline" className="w-full text-xs h-7 border-gray-600 hover:bg-gray-700 transition-colors">
               <Crown className="w-3 h-3 mr-1" />
               Upgrade to Pro
             </Button>
@@ -182,84 +177,125 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
   };
 
   return (
-    <div className="w-full h-full bg-gray-900 border-r border-gray-700 flex flex-col">
-      {/* Header */}
-      <div className={`border-b border-gray-700 ${isMobile ? 'p-4' : 'p-6 min-h-[100px]'}`}>
-        <h1 className={`font-bold text-orange-400 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-          DSA Platform
-        </h1>
-        <p className="text-sm text-gray-400 mt-1">
-          {isMobile ? 'Learning path' : 'Choose your learning path'}
-        </p>
+    <div className={`w-full h-full bg-gray-900 border-r border-gray-700 flex flex-col transition-all duration-300 ${
+      isMobile ? (isVisible ? 'opacity-100' : 'opacity-0') : 'opacity-100'
+    }`}>
+      {/* Header with Slide-in Animation */}
+      <div className={`border-b border-gray-700 ${isMobile ? 'p-4' : 'p-6 min-h-[100px]'} transition-all duration-300 delay-75 ${
+        isMobile ? (isVisible ? 'transform translate-x-0' : 'transform -translate-x-4 opacity-0') : ''
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <h1 className={`font-bold text-orange-400 ${isMobile ? 'text-lg' : 'text-xl'}`}>
+              DSA Platform
+            </h1>
+            <p className="text-sm text-gray-400 mt-1">
+              {isMobile ? 'Learning path' : 'Choose your learning path'}
+            </p>
+          </div>
+          
+          {/* Close button with hover effect */}
+          {isMobile && onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="text-gray-400 hover:text-white hover:bg-gray-800 p-2 ml-2 rounded-full transition-all duration-200 hover:rotate-90"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Subscription Notice - Only show for signed in users */}
+      {/* Subscription Notice with Staggered Animation */}
       {isSignedIn && !isLoading && (
-        <div className={`border-b border-gray-700 ${isMobile ? 'p-3' : 'p-4'}`}>
+        <div className={`border-b border-gray-700 ${isMobile ? 'p-3' : 'p-4'} transition-all duration-300 delay-100 ${
+          isMobile ? (isVisible ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
+        }`}>
           {renderSubscriptionNotice()}
         </div>
       )}
 
-      {/* Courses List */}
-      <div className={`flex-1 overflow-y-auto space-y-3 ${isMobile ? 'p-3' : 'p-4'}`}>
+      {/* Courses List with Staggered Animation */}
+      <div className={`flex-1 overflow-y-auto space-y-3 ${isMobile ? 'p-3' : 'p-4'} transition-all duration-300 delay-150 ${
+        isMobile ? (isVisible ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
+      }`}>
         {/* Default Courses Section */}
-        <div>
+        <div className="transform transition-all duration-300">
           <button
             onClick={() => toggleSection('default')}
-            className={`flex items-center justify-between w-full text-left rounded-lg transition-colors ${expandedSections.includes('default') ? 'bg-gray-800' : 'hover:bg-gray-800'} ${
-              isMobile ? 'p-2' : 'p-2'
-            }`}
+            className={`flex items-center justify-between w-full text-left rounded-lg transition-all duration-200 hover:scale-[1.02] ${
+              expandedSections.includes('default') ? 'bg-gray-800 shadow-sm' : 'hover:bg-gray-800'
+            } ${isMobile ? 'p-2' : 'p-2'}`}
           >
             <div className="flex items-center space-x-2 min-w-0">
-              {expandedSections.includes('default') ? (
-                <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              )}
+              <div className="transition-transform duration-200">
+                {expandedSections.includes('default') ? (
+                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                )}
+              </div>
               <BookOpen className="w-4 h-4 text-orange-400 flex-shrink-0" />
               <span className={`font-medium text-gray-200 truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
                 Default Courses
               </span>
             </div>
-            <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2">
+            <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2 transition-all duration-200">
               {defaultCourses.length}
             </Badge>
           </button>
 
-          {expandedSections.includes('default') && (
+          {/* Animated expansion */}
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            expandedSections.includes('default') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}>
             <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
-              {defaultCourses.map((course) => (
-                <CourseItem
+              {defaultCourses.map((course, index) => (
+                <div
                   key={course.id}
-                  course={course}
-                  isSelected={selectedCourse?.id === course.id}
-                  onClick={() => onCourseSelect(course)}
-                  isMobile={isMobile}
-                />
+                  className={`transform transition-all duration-300 ${
+                    expandedSections.includes('default') 
+                      ? 'translate-x-0 opacity-100' 
+                      : '-translate-x-4 opacity-0'
+                  }`}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                >
+                  <CourseItem
+                    course={course}
+                    isSelected={selectedCourse?.id === course.id}
+                    onClick={() => onCourseSelect(course)}
+                    isMobile={isMobile}
+                  />
+                </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* User Courses Section */}
+        {/* User Courses Section with Similar Animation */}
         {isSignedIn ? (
-          <div>
+          <div className="transform transition-all duration-300">
             <button
               onClick={() => toggleSection('user')}
-              className={`flex items-center justify-between w-full text-left ${expandedSections.includes('user') ? 'bg-gray-800' : 'hover:bg-gray-800'} rounded-lg transition-colors ${
-                isMobile ? 'p-2' : 'p-2'
-              }`}
+              className={`flex items-center justify-between w-full text-left rounded-lg transition-all duration-200 hover:scale-[1.02] ${
+                expandedSections.includes('user') ? 'bg-gray-800 shadow-sm' : 'hover:bg-gray-800'
+              } ${isMobile ? 'p-2' : 'p-2'}`}
             >
               <div className="flex items-center space-x-2 min-w-0">
-                {expandedSections.includes('user') ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                )}
+                <div className="transition-transform duration-200">
+                  {expandedSections.includes('user') ? (
+                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  )}
+                </div>
                 <div className="flex items-center gap-1">
                   <User className="w-4 h-4 text-blue-400 flex-shrink-0" />
                   {userInfo?.isPro && (
-                    <Crown className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                    <Crown className="w-3 h-3 text-yellow-400 flex-shrink-0 animate-pulse" />
                   )}
                 </div>
                 <span className={`font-medium text-gray-200 truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
@@ -267,7 +303,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
                   {userInfo?.isPro && <span className="text-yellow-400 ml-1">Pro</span>}
                 </span>
               </div>
-              <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2">
+              <Badge variant="secondary" className="text-xs flex-shrink-0 ml-2 transition-all duration-200">
                 {userCourses.length}
                 {userInfo?.limits && userInfo.limits.maxCourses !== -1 && (
                   <span className="text-gray-500">/{userInfo.limits.maxCourses}</span>
@@ -275,10 +311,20 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
               </Badge>
             </button>
 
-            {expandedSections.includes('user') && (
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              expandedSections.includes('user') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
               <div className={`mt-2 space-y-1 ${isMobile ? 'ml-4' : 'ml-6'}`}>
-                {userCourses.map((course) => (
-                  <div key={course.id} className="group">
+                {userCourses.map((course, index) => (
+                  <div
+                    key={course.id}
+                    className={`group transform transition-all duration-300 ${
+                      expandedSections.includes('user') 
+                        ? 'translate-x-0 opacity-100' 
+                        : '-translate-x-4 opacity-0'
+                    }`}
+                    style={{ transitionDelay: `${index * 50}ms` }}
+                  >
                     <CourseItem
                       course={course}
                       isSelected={selectedCourse?.id === course.id}
@@ -287,14 +333,18 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
                     />
                   </div>
                 ))}
-                <div className="mt-2">
+                <div className={`mt-2 transform transition-all duration-300 ${
+                  expandedSections.includes('user') 
+                    ? 'translate-x-0 opacity-100' 
+                    : '-translate-x-4 opacity-0'
+                }`} style={{ transitionDelay: `${userCourses.length * 50}ms` }}>
                   <AddCourseDialog />
                 </div>
               </div>
-            )}
+            </div>
           </div>
         ) : (
-          <div className="bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg p-4 flex items-start space-x-3">
+          <div className="bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg p-4 flex items-start space-x-3 transform transition-all duration-300 hover:bg-blue-500/20">
             <div className="flex-shrink-0">
               <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -304,7 +354,7 @@ export function CoursesSidebar({ courses, selectedCourse, onCourseSelect, isMobi
               <h4 className="text-blue-300 font-medium mb-1">Create Custom Courses</h4>
               <p className="text-gray-300 text-sm mb-3">Sign in to add new courses to organize your questions and track your learning progress.</p>
               <SignInButton>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition-colors">
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition-all duration-200 hover:scale-105">
                   Create Now
                 </Button>
               </SignInButton>
@@ -330,19 +380,18 @@ function CourseItem({ course, isSelected, onClick, isMobile = false }: CourseIte
 
   return (
     <div
-      className={`w-full rounded-lg transition-colors ${
+      className={`w-full rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
         isMobile ? 'p-2' : 'p-3'
       } ${
         isSelected
-          ? 'bg-orange-500/10 border border-orange-500/20'
-          : 'hover:bg-gray-700'
+          ? 'bg-orange-500/10 border border-orange-500/20 shadow-lg scale-[1.02]'
+          : 'hover:bg-gray-700 active:scale-[0.98]'
       }`}
     >
       <div className="flex items-center justify-between min-w-0">
-        {/* Clickable course info */}
         <button
           onClick={onClick}
-          className={`flex-1 min-w-0 text-left ${
+          className={`flex-1 min-w-0 text-left touch-manipulation transition-colors duration-200 ${
             isSelected ? 'text-orange-400' : 'text-gray-300'
           }`}
         >
@@ -354,10 +403,9 @@ function CourseItem({ course, isSelected, onClick, isMobile = false }: CourseIte
           </p>
         </button>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-1 ml-2" onClick={handleDeleteClick}>
           {course.isDefault ? (
-            <Badge variant="outline" className="text-xs flex-shrink-0">
+            <Badge variant="outline" className="text-xs flex-shrink-0 transition-all duration-200">
               Default
             </Badge>
           ) : (
@@ -365,7 +413,7 @@ function CourseItem({ course, isSelected, onClick, isMobile = false }: CourseIte
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-gray-400 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-gray-400 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                 title="Delete course"
               >
                 <Trash className="w-3 h-3" />

@@ -14,7 +14,7 @@ export const useCourses = () => {
         throw new Error('Failed to fetch courses');
       }
       return response.json();
-    }
+    },
   });
 };
 

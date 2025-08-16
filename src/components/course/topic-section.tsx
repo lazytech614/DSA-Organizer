@@ -6,6 +6,7 @@ import { QuestionItem } from '@/components/course/question-item';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { QuestionWithSolvedStatus } from '@/types';
+import { useCourses } from '@/hooks/useCourses';
 
 interface TopicSectionProps {
   topic: string;
@@ -15,6 +16,9 @@ interface TopicSectionProps {
 }
 
 export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSectionProps) {
+  const { data: courses } = useCourses();
+  const course = courses?.find(c => c.id === courseId);
+
   const [isExpanded, setIsExpanded] = useState(false);
 
   const easyCount = questions.filter(q => q.difficulty.toUpperCase() === 'EASY').length;
@@ -91,12 +95,14 @@ export function TopicSection({ topic, questions, stepNumber, courseId }: TopicSe
       {isExpanded && (
         <CardContent className="p-0">
           <div className="border-t border-gray-700">
-            {questions.map((question, index) => (
+            {questions.map((question, questionIndex) => (
               <QuestionItem
                 key={question.id}
                 question={question}
-                index={index + 1}
-                courseId={courseId} 
+                index={questionIndex + 1}
+                courseId={courseId}
+                courseTitle={course?.title} // Pass course title
+                showDelete={!course?.isDefault} // Show delete only for user courses
               />
             ))}
           </div>

@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { UserButton, SignInButton, useUser } from '@clerk/nextjs';
 import { CourseWithQuestions } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, MoreVertical, Star } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Star, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useUserSubscription } from '@/hooks/useUserInfo';
@@ -18,7 +17,6 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardHeaderProps) {
   const { isSignedIn } = useUser();
   const { user } = useUser();
-  const [showSearch, setShowSearch] = useState(false);
   const { data: userInfo, isLoading, error } = useUserSubscription();
 
   const { data: isAdminUser } = useQuery({
@@ -26,7 +24,7 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
     queryFn: async () => {
       if (!user) return false;
       const userEmail = user.emailAddresses[0]?.emailAddress;
-      const adminEmailsStr = process.env.NEXT_PUBLIC_ADMIN_EMAILS; // Note: NEXT_PUBLIC_ prefix
+      const adminEmailsStr = process.env.NEXT_PUBLIC_ADMIN_EMAILS;
       if (!adminEmailsStr || !userEmail) return false;
       
       const adminEmails = adminEmailsStr
@@ -39,22 +37,45 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
     enabled: !!user
   });
 
+  // For mobile, return compact header actions only
+  if (isMobile) {
+    return (
+      <div className="flex items-center space-x-2">
+        {/* User Authentication - Compact */}
+        <div className="flex-shrink-0">
+          {isSignedIn ? (
+            <UserButton 
+              afterSignOutUrl="/" 
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8"
+                }
+              }}
+            />
+          ) : (
+            <SignInButton>
+              <Button size="sm" className="text-sm px-3">
+                Sign In
+              </Button>
+            </SignInButton>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-900 border-b border-gray-700 min-h-[100px]">
-      <div className={`${isMobile ? 'p-4 pt-16' : 'p-4'}`}>
+      <div className="p-4">
         <div className="flex items-center justify-between">
           {/* Course Info */}
           <div className="flex-1 min-w-0">
             {selectedCourse && (
               <div>
-                <h1 className={`font-bold text-white truncate ${
-                  isMobile ? 'text-lg' : 'text-2xl'
-                }`}>
+                <h1 className="text-2xl font-bold text-white truncate">
                   {selectedCourse.title}
                 </h1>
-                <p className={`text-gray-400 mt-1 ${
-                  isMobile ? 'text-sm hidden sm:block' : 'block'
-                }`}>
+                <p className="text-gray-400 mt-1">
                   Master Data Structures and Algorithms with structured practice
                 </p>
               </div>
@@ -62,35 +83,27 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-2 ml-4">
-            {/* Subscriptions */}
+          <div className="flex items-center space-x-3 ml-4">
+            {/* Admin/Pro Actions */}
             {isAdminUser ? (
-                <Link href="/admin">
-                  <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300">
-                    Admin Panel
-                  </Button>
-                </Link>
-              ) : (
-                !userInfo?.isPro && (
+              <Link href="/admin">
+                <Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300">
+                  Admin Panel
+                </Button>
+              </Link>
+            ) : (
+              !userInfo?.isPro && (
+                <Link href="/pricing">
                   <Button
                     variant="outline"
-                    size={isMobile ? "sm" : "default"}
-                    className="hidden sm:flex"
+                    size="default"
+                    className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-500"
                   >
-                    <Star className="w-4 h-4 mr-1" />
-                    <span>Get Pro</span>
+                    <Star className="w-4 h-4 mr-2" />
+                    Get Pro
                   </Button>
-                )
-            ) }
-            {/* Mobile More Options */}
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="sm:hidden"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
+                </Link>
+              )
             )}
 
             {/* User Authentication */}
@@ -99,7 +112,7 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton>
-                  <Button size={isMobile ? "sm" : "default"}>
+                  <Button>
                     Sign In
                   </Button>
                 </SignInButton>
@@ -107,19 +120,6 @@ export function DashboardHeader({ selectedCourse, isMobile = false }: DashboardH
             </div>
           </div>
         </div>
-
-        {/* Mobile Search Bar */}
-        {isMobile && showSearch && (
-          <div className="mt-4 sm:hidden">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search problems..."
-                className="pl-10 w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

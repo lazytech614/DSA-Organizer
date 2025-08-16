@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CreateQuestionData, CreateCourseData, CourseWithQuestions } from '@/types';
+import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
 export const useCreateQuestion = () => {
   const queryClient = useQueryClient();
@@ -123,6 +125,100 @@ export const useCreateQuestion = () => {
           queryKey: ['subscription-limits', data.courseId] 
         });
       }
+    },
+  });
+};
+
+export const useDeleteQuestion = () => {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`/api/questions/${questionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('🔴🔴response', response);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete question');
+      }
+
+      console.log('✅ Question deleted successfully', response);
+
+      return response.json();
+    },
+    onMutate: async (questionId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['courses'] });
+      await queryClient.cancelQueries({ queryKey: ['user-info'] });
+
+      // Snapshot the previous values
+      const previousCourses = queryClient.getQueryData(['courses']);
+      const previousUserInfo = queryClient.getQueryData(['user-info']);
+
+      // Optimistically update courses - remove question
+      queryClient.setQueryData(['courses'], (old: any) => {
+        if (!old) return old;
+        
+        return old.map((course: any) => ({
+          ...course,
+          questions: course.questions.filter((q: any) => q.id !== questionId),
+          questionCount: Math.max(0, course.questionCount - 1)
+        }));
+      });
+
+      // Optimistically update user info - remove from solved and bookmarks
+      queryClient.setQueryData(['user-info'], (old: any) => {
+        if (!old) return old;
+        
+        const wasSolved = old.solvedQuestions.some((sq: any) => sq.questionId === questionId);
+        const wasBookmarked = old.bookmarkedQuestions.includes(questionId);
+        
+        return {
+          ...old,
+          solvedQuestions: old.solvedQuestions.filter((sq: any) => sq.questionId !== questionId),
+          bookmarkedQuestions: old.bookmarkedQuestions.filter((id: string) => id !== questionId),
+          stats: {
+            ...old.stats,
+            totalQuestionsSolved: wasSolved ? Math.max(0, old.stats.totalQuestionsSolved - 1) : old.stats.totalQuestionsSolved,
+            questionsBookmarked: wasBookmarked ? Math.max(0, old.stats.questionsBookmarked - 1) : old.stats.questionsBookmarked,
+          }
+        };
+      });
+
+      return { previousCourses, previousUserInfo };
+    },
+    onError: (err, questionId, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousCourses) {
+        queryClient.setQueryData(['courses'], context.previousCourses);
+      }
+      if (context?.previousUserInfo) {
+        queryClient.setQueryData(['user-info'], context.previousUserInfo);
+      }
+      
+      toast.error('Failed to delete question');
+    },
+    onSuccess: (data, questionId) => {
+      toast.success(`Question "${data.deletedQuestion?.title || 'Question'}" deleted successfully`);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-info'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['solved-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
     },
   });
 };
