@@ -20,6 +20,7 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "off",
       // allow unescaped characters in JSX (e.g. apostrophes, >, etc.)
       "react/no-unescaped-entities": "off",
+      "prefer-const": "off",
     },
   },
 ];
