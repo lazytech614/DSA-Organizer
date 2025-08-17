@@ -14,6 +14,7 @@ export default function HomePage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithQuestions | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ✅ This state is properly managed
 
   // Handle window resize
   useEffect(() => {
@@ -22,8 +23,10 @@ export default function HomePage() {
       setIsMobile(mobile);
       if (!mobile) {
         setSidebarOpen(true); // Always open on desktop
+        // ✅ Reset collapse state when switching to desktop
       } else {
         setSidebarOpen(false); // Always closed initially on mobile
+        setSidebarCollapsed(false); // ✅ Reset collapse on mobile
       }
     };
 
@@ -57,6 +60,12 @@ export default function HomePage() {
     }
   };
 
+  // ✅ Debug function to check if toggle is working
+  const handleToggleCollapse = () => {
+    console.log('Toggle collapse clicked:', { current: sidebarCollapsed, new: !sidebarCollapsed });
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
@@ -81,14 +90,16 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - ✅ Fixed container width logic */}
       {!isMobile && (
-        <div className="w-80 xl:w-96 flex-shrink-0">
+        <div className={`${sidebarCollapsed ? 'w-16' : 'w-80 xl:w-96'} flex-shrink-0 transition-all duration-300`}>
           <CoursesSidebar
             courses={courses || []}
             selectedCourse={selectedCourse}
             onCourseSelect={handleCourseSelect}
             isMobile={false}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={handleToggleCollapse}
           />
         </div>
       )}
@@ -122,6 +133,8 @@ export default function HomePage() {
                 onCourseSelect={handleCourseSelect}
                 onClose={() => setSidebarOpen(false)}
                 isMobile={true}
+                collapsed={false} // ✅ Mobile is never collapsed
+                onToggleCollapse={undefined} // ✅ No toggle on mobile
               />
             </div>
           </div>
@@ -180,6 +193,13 @@ export default function HomePage() {
         >
           <Menu className="w-5 h-5" />
         </Button>
+      )}
+
+      {/* ✅ Debug indicator - Remove after testing */}
+      {!isMobile && (
+        <div className="fixed bottom-4 right-4 bg-black/50 text-white p-2 rounded text-xs">
+          Collapsed: {sidebarCollapsed.toString()}
+        </div>
       )}
     </div>
   );
