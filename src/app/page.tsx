@@ -143,31 +143,33 @@ export default function HomePage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 relative">
-        {/* Mobile Header with Menu Button */}
+        {/* Mobile Header with Menu Button - ✅ Fixed dark background */}
         {isMobile && (
-          <div className="lg:hidden bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between relative z-10">
+          <div className="lg:hidden bg-gray-900 border-b border-gray-700 px-4 flex items-center justify-between relative z-10">
             <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSidebarOpen(true)}
-                className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 -ml-2 transition-all duration-200"
+                className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 -ml-2 transition-all duration-200 rounded-md"
                 aria-label="Open menu"
               >
                 <Menu className="w-5 h-5" />
               </Button>
-              <div>
+              {/* <div>
                 <h1 className="text-lg font-bold text-orange-400">DSA Platform</h1>
                 {selectedCourse && (
                   <p className="text-xs text-gray-400 truncate max-w-[200px]">
                     {selectedCourse.title}
                   </p>
                 )}
-              </div>
+              </div> */}
             </div>
             
             {/* Mobile header actions */}
-            <DashboardHeader selectedCourse={selectedCourse} isMobile={true} />
+            <div className="flex items-center w-full">
+              <DashboardHeader selectedCourse={selectedCourse} isMobile={true} />
+            </div>
           </div>
         )}
 

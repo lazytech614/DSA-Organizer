@@ -96,7 +96,7 @@ export function DashboardHeader({
   // For mobile, return compact header actions only
   if (isMobile) {
     return (
-      <div className="bg-gray-900 border-b border-gray-700 sticky top-0 z-50">
+      <div className="bg-gray-900 border-b border-gray-700 sticky top-0 z-50 w-full">
         <div className="flex items-center justify-between p-4">
           {/* Mobile Menu Button & Title */}
           <div className="flex items-center space-x-3">
@@ -118,9 +118,12 @@ export function DashboardHeader({
                 </>
               ) : (
                 selectedCourse && (
-                  <h1 className="text-lg font-bold text-white truncate">
-                    {selectedCourse.title}
-                  </h1>
+                  <div className='flex items-center'>
+                    <h1 className="text-lg font-bold text-white truncate">
+                      {selectedCourse.title}
+                    </h1>
+                    
+                  </div>
                 )
               )}
             </div>
@@ -128,6 +131,15 @@ export function DashboardHeader({
 
           {/* Mobile Actions */}
           <div className="flex items-center space-x-2">
+            {!isPlatformPage && (
+              <Link 
+                href="/platforms" 
+                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-700 transition-colors"
+              >
+                <Code2 className="w-4 h-4" />
+                <span className='text-sm'>Platforms</span>
+              </Link>
+            )}
             {isPlatformPage && platforms.length > 0 && (
               <Button
                 size="sm"
