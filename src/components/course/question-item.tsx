@@ -12,6 +12,7 @@ import { useUserInfo } from '@/hooks/useUserInfo';
 import { DeleteQuestionDialog } from '@/components/dialogs/delete-question-dialog';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface QuestionItemProps {
   question: Question & { isSolved?: boolean; isBookmarked?: boolean };
@@ -185,11 +186,11 @@ export function QuestionItem({ question, index, courseId, courseTitle, showDelet
               {question.difficulty}
             </Badge>
             <div className="flex flex-wrap items-center gap-1">
-              {question.topics.slice(0, 2).map((topic) => (
+              {/* {question.topics.slice(0, 2).map((topic) => (
                 <Badge key={topic} variant="secondary" className="text-xs bg-gray-600">
                   {topic}
                 </Badge>
-              ))}
+              ))} */}
               {question.topics.length > 2 && (
                 <Badge variant="secondary" className="text-xs bg-gray-600">
                   +{question.topics.length - 2}
@@ -201,37 +202,28 @@ export function QuestionItem({ question, index, courseId, courseTitle, showDelet
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between sm:justify-end space-x-2 w-full sm:w-auto">
+      <div className="flex items-center justify-start sm:justify-end sm:space-x-2 w-full sm:w-auto">
         {/* Practice Links */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
-          {question.urls.slice(0, 2).map((url, urlIndex) => (
-            <Button
-              key={urlIndex}
-              size="sm"
-              variant="ghost"
-              className="text-gray-400 hover:text-white p-1 sm:p-2 transition-colors"
-              disabled={isDeleting}
-              asChild
-            >
-              <a
-                href={url}
-                target="_blank"
+          <Button
+            key={question.urls[0]}
+            size="sm"
+            variant="ghost"
+            className="text-gray-400 hover:text-white p-1 sm:p-2 transition-colors"
+            disabled={isDeleting}
+            asChild
+          >
+            <Link
+              href={question.urls[0]}
+              target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                <span className="text-xs hidden sm:inline">
-                  {url.includes('leetcode') ? 'LC' : 
-                   url.includes('geeksforgeeks') ? 'GFG' : 
-                   `Link ${urlIndex + 1}`}
-                </span>
-              </a>
-            </Button>
-          ))}
-          {question.urls.length > 2 && (
-            <span className="text-xs text-gray-500">+{question.urls.length - 2}</span>
-          )}
-        </div>
+              className="flex items-center space-x-1"
+            >
+              <ExternalLink className="w-3 h-3" />
+              <span className="text-xs hidden sm:inline">
+                Practice
+              </span>
+            </Link>
+          </Button>
 
         {/* Delete Button (only for user's own courses) */}
         {canDelete && (
