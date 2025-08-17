@@ -517,14 +517,14 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
                 <div className={`transform transition-all duration-300 delay-150 ${
                   (isMobile || isTablet) ? (isVisible ? 'translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
                 }`}>
-                  <div className="space-y-3 lg:space-y-4">
+                  <div className="space-y-3 lg:space-y-4 pb-10">
                     <h4 className={`font-medium text-gray-300 uppercase tracking-wide ${
                       isMobile ? 'text-xs' : 'text-sm'
                     }`}>Achievements</h4>
                     <div className="space-y-2">
                       {totalStats.totalSolved >= 100 && (
                         <div className={`flex items-center space-x-2 bg-yellow-500/10 rounded-lg transition-all duration-300 hover:bg-yellow-500/20 ${
-                          isMobile ? 'p-2' : 'p-2'
+                          isMobile ? 'p-2' : 'p-4'
                         }`}>
                           <Trophy className="w-4 h-4 text-yellow-400 flex-shrink-0" />
                           <span className={`text-yellow-400 ${isMobile ? 'text-xs' : 'text-xs'}`}>100+ Problems Solved</span>

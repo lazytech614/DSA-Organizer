@@ -1,6 +1,7 @@
 // lib/platform-service.ts
 import { Platform } from '@prisma/client';
 
+// In your types file (e.g., types/index.ts or lib/types.ts)
 export interface PlatformStats {
   totalSolved?: number;
   easySolved?: number;
@@ -8,12 +9,31 @@ export interface PlatformStats {
   hardSolved?: number;
   rating?: number;
   maxRating?: number;
-  rank?: string;
-  maxRank?: string;
   contests?: number;
-  contribution?: number;
-  acceptanceRate?: number;
+  rank?: number;
+  
+  // ✅ Add bio-related fields for verification
+  bio?: string;
+  about?: string;
+  description?: string;
+  
+  // Platform-specific fields
+  leetcode?: {
+    ranking?: number;
+    reputation?: number;
+    contributionPoints?: number;
+  };
+  
+  codeforces?: {
+    handle?: string;
+    maxRank?: string;
+    currentRank?: string;
+  };
+  
+  // Add other platform-specific fields as needed
+  [key: string]: any; // For flexibility with different platforms
 }
+
 
 export class PlatformService {
   async fetchUserData(platform: string, username: string): Promise<PlatformStats | null> {
