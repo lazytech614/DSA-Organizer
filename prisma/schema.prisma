@@ -41,6 +41,10 @@ model User {
   // ✅ Usage tracking for limits
   totalCoursesCreated Int      @default(0)
 
+  // ✅ Platform integration relations (ADDED THESE)
+  linkedPlatforms     UserPlatform[]
+  platformSyncs       PlatformSync[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -94,6 +98,37 @@ model SubscriptionPlan {
   @@map("subscription_plans")
 }
 
+model UserPlatform {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  Platform
+  username  String
+  isActive  Boolean  @default(true)
+  lastSync  DateTime @default(now())
+  
+  // Platform-specific data
+  stats     Json?    // Store normalized stats
+  
+  user      User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, platform])
+  @@map("user_platforms")
+}
+
+model PlatformSync {
+  id          String   @id @default(cuid())
+  userId      String
+  platform    Platform
+  syncedAt    DateTime @default(now())
+  status      SyncStatus
+  data        Json?
+  errorMsg    String?
+  
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("platform_syncs")
+}
+
 enum Difficulty {
   EASY
   MEDIUM
@@ -110,4 +145,20 @@ enum SubscriptionStatus {
   CANCELLED
   EXPIRED
   PAST_DUE
+}
+
+
+enum Platform {
+  LEETCODE
+  GEEKSFORGEEKS
+  CODEFORCES
+  CODECHEF
+  HACKERRANK
+  ATCODER
+}
+
+enum SyncStatus {
+  SUCCESS
+  FAILED
+  PENDING
 }
