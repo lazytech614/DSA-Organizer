@@ -1,7 +1,5 @@
-// lib/platform-service.ts
-import { Platform } from '@prisma/client';
+import { GeeksforGeeksTracker } from "./trackers/geeksforgeeksTracker";
 
-// In your types file (e.g., types/index.ts or lib/types.ts)
 export interface PlatformStats {
   totalSolved?: number;
   easySolved?: number;
@@ -36,6 +34,8 @@ export interface PlatformStats {
 
 
 export class PlatformService {
+  private gfgTracker = new GeeksforGeeksTracker();
+
   async fetchUserData(platform: string, username: string): Promise<PlatformStats | null> {
     try {
       switch (platform.toLowerCase()) {
@@ -133,13 +133,7 @@ export class PlatformService {
 
   private async fetchCodeChefData(username: string): Promise<PlatformStats | null> {
     try {
-      // CodeChef doesn't have a public API, so this would require web scraping
-      // For now, return mock data or implement scraping
-      console.log(`CodeChef data fetching not implemented for ${username}`);
-      return {
-        rating: 1500, // Mock data
-        contests: 0,
-      };
+      return this.fetchUserData('codechef', username);
     } catch (error) {
       console.error('CodeChef API error:', error);
       return null;
@@ -148,15 +142,36 @@ export class PlatformService {
 
   private async fetchGeeksForGeeksData(username: string): Promise<PlatformStats | null> {
     try {
-      // GeeksforGeeks doesn't have a public API
-      // This would require web scraping
-      console.log(`GeeksforGeeks data fetching not implemented for ${username}`);
+      console.log(`Fetching GeeksforGeeks data for ${username}`);
+      
+      // Use the tracker directly without recursion
+      const result = await this.gfgTracker.getProgress(username);
+
+      console.log(`🟢🟢GeeksforGeeks data for ${username}:`, result);
+      
+      if (!result) {
+        console.log(`No GFG data found for ${username}`);
+        return null;
+      }
+
+      // Convert to PlatformStats format
       return {
-        totalSolved: 0, // Mock data
+        totalSolved: result.totalSolved || 0,
+        easySolved: result.easySolved || 0,
+        mediumSolved: result.mediumSolved || 0,
+        hardSolved: result.hardSolved || 0,
+        platform: 'geeksforgeeks'
       };
     } catch (error) {
       console.error('GeeksforGeeks API error:', error);
-      return null;
+      // Return basic structure instead of null
+      return {
+        totalSolved: 0,
+        easySolved: 0,
+        mediumSolved: 0,
+        hardSolved: 0,
+        platform: 'geeksforgeeks'
+      };
     }
   }
 }
