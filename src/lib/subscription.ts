@@ -4,10 +4,13 @@ import { User, SubscriptionType, SubscriptionStatus } from '@prisma/client';
 export interface SubscriptionLimits {
   maxCourses: number; // -1 for unlimited
   maxQuestionsPerCourse: number; // -1 for unlimited
+  maxPlatforms: number; // ✅ Added platform limits
   canCreateCourse: boolean;
   canAddQuestion: boolean;
+  canLinkPlatform: boolean; // ✅ Added platform linking check
   coursesRemaining: number;
   questionsRemaining?: number; // For specific course
+  platformsRemaining: number; // ✅ Added platforms remaining
 }
 
 export async function getUserSubscriptionLimits(
@@ -21,6 +24,10 @@ export async function getUserSubscriptionLimits(
         where: { isDefault: false },
         select: { id: true, questionCount: true }
       },
+      linkedPlatforms: {
+        where: { isActive: true },
+        select: { id: true }
+      }
     }
   });
 
@@ -38,8 +45,13 @@ export async function getUserSubscriptionLimits(
   }
 
   const userCourseCount = user.courses.length;
+  const userPlatformCount = user.linkedPlatforms.length; // ✅ Count linked platforms
+  
   const canCreateCourse = plan.maxCourses === -1 || userCourseCount < plan.maxCourses;
+  const canLinkPlatform = plan.maxPlatforms === -1 || userPlatformCount < plan.maxPlatforms; // ✅ Check platform limit
+  
   const coursesRemaining = plan.maxCourses === -1 ? -1 : Math.max(0, plan.maxCourses - userCourseCount);
+  const platformsRemaining = plan.maxPlatforms === -1 ? -1 : Math.max(0, plan.maxPlatforms - userPlatformCount); // ✅ Calculate remaining platforms
 
   let canAddQuestion = true;
   let questionsRemaining: number | undefined;
@@ -57,16 +69,19 @@ export async function getUserSubscriptionLimits(
   return {
     maxCourses: plan.maxCourses,
     maxQuestionsPerCourse: plan.maxQuestionsPerCourse,
+    maxPlatforms: plan.maxPlatforms, // ✅ Added
     canCreateCourse,
     canAddQuestion,
+    canLinkPlatform, // ✅ Added
     coursesRemaining,
-    questionsRemaining
+    questionsRemaining,
+    platformsRemaining // ✅ Added
   };
 }
 
 export async function checkSubscriptionLimit(
   userId: string, 
-  action: 'CREATE_COURSE' | 'ADD_QUESTION',
+  action: 'CREATE_COURSE' | 'ADD_QUESTION' | 'LINK_PLATFORM', 
   courseId?: string
 ): Promise<{ allowed: boolean; reason?: string }> {
   const limits = await getUserSubscriptionLimits(userId, courseId);
@@ -86,6 +101,16 @@ export async function checkSubscriptionLimit(
         return {
           allowed: false,
           reason: `You've reached your limit of ${limits.maxQuestionsPerCourse} questions per course. Upgrade to Pro for unlimited questions.`
+        };
+      }
+      return { allowed: true };
+
+    // ✅ Added platform linking limit check
+    case 'LINK_PLATFORM':
+      if (!limits.canLinkPlatform) {
+        return {
+          allowed: false,
+          reason: `You've reached your limit of ${limits.maxPlatforms} platforms. Upgrade to Pro for unlimited platform integrations.`
         };
       }
       return { allowed: true };

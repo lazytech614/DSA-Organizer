@@ -5,7 +5,7 @@ import { checkSubscriptionLimit } from '@/lib/subscription';
 
 export async function withSubscriptionLimit(
   request: NextRequest,
-  action: 'CREATE_COURSE' | 'ADD_QUESTION',
+  action: 'CREATE_COURSE' | 'ADD_QUESTION' | 'LINK_PLATFORM', 
   courseId?: string
 ) {
   const { userId: clerkUserId } = await auth();

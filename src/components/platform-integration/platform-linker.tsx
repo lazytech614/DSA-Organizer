@@ -8,14 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { UserPlatform, Platform } from '@prisma/client';
 import { toast } from 'sonner';
-import { Trash2, Link2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Trash2, Link2, ExternalLink, RefreshCw, Crown, Shield, AlertTriangle, Info } from 'lucide-react';
 
 interface PlatformLinkerProps {
   userId: string;
   linkedPlatforms: UserPlatform[];
+  onLimitCheck?: () => boolean;
 }
 
-export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps) {
+export function PlatformLinker({ userId, linkedPlatforms, onLimitCheck }: PlatformLinkerProps) {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [unlinking, setUnlinking] = useState<string | null>(null);
   const [newUsername, setNewUsername] = useState('');
@@ -30,31 +31,43 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
     { key: 'ATCODER' as Platform, name: 'AtCoder', icon: '🟠', color: 'bg-orange-500' },
   ];
 
+  // ✅ Check if platform is already linked
+  const isPlatformLinked = (platform: Platform) => {
+    return linkedPlatforms.some(lp => lp.platform === platform);
+  };
+
+  // ✅ Handle platform connection with limit checking
+  const handleConnectClick = (platform: Platform) => {
+    // If platform is already linked, just show the connection form
+    if (isPlatformLinked(platform)) {
+      setSelectedPlatform(platform);
+      return;
+    }
+
+    // ✅ Check limits for new connections
+    if (onLimitCheck && !onLimitCheck()) {
+      // Limit dialog will be shown by parent component
+      return;
+    }
+
+    setSelectedPlatform(platform);
+  };
+
   const handleConnect = async (platform: Platform) => {
     if (!newUsername.trim()) {
       toast.error('Please enter your username');
       return;
     }
 
+    // ✅ Double-check limits before API call for new connections
+    if (!isPlatformLinked(platform) && onLimitCheck && !onLimitCheck()) {
+      return;
+    }
+
     setConnecting(platform);
 
     try {
-      // First, verify the username exists on the platform
-      const verificationResponse = await fetch('/api/platforms/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform,
-          username: newUsername.trim()
-        })
-      });
-
-      if (!verificationResponse.ok) {
-        const errorData = await verificationResponse.json();
-        throw new Error(errorData.error || 'Username not found on this platform');
-      }
-
-      // Link the platform
+      // Link the platform (API will handle verification)
       const response = await fetch('/api/platforms/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,12 +77,24 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to link platform');
+        // ✅ Handle specific limit errors
+        if (response.status === 403 && data.upgradeRequired) {
+          toast.error(data.message || 'Platform limit reached');
+          return;
+        }
+        throw new Error(data.error || 'Failed to link platform');
       }
 
-      toast.success(`Successfully linked ${platform}!`);
+      const isUpdate = data.isNewLink === false;
+      toast.success(
+        isUpdate 
+          ? `Successfully updated ${platform} connection!`
+          : `Successfully linked ${platform}!`
+      );
+      
       setNewUsername('');
       setSelectedPlatform(null);
       
@@ -122,7 +147,15 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-white">Link Your Coding Platforms</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Link Your Coding Platforms</h3>
+        
+        {/* ✅ Platform limit info */}
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Info className="w-4 h-4" />
+          <span>{linkedPlatforms.length} platform{linkedPlatforms.length !== 1 ? 's' : ''} connected</span>
+        </div>
+      </div>
       
       {/* Linked Platforms */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -130,7 +163,11 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
           const linked = linkedPlatforms.find(lp => lp.platform === platform.key);
           
           return (
-            <div key={platform.key} className="border border-gray-700 rounded-lg p-4 bg-gray-800 hover:bg-gray-750 transition-colors">
+            <div key={platform.key} className={`border rounded-lg p-4 transition-colors ${
+              linked 
+                ? 'border-green-500/30 bg-green-500/5 hover:bg-green-500/10' 
+                : 'border-gray-700 bg-gray-800 hover:bg-gray-750'
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 ${platform.color} rounded-full flex items-center justify-center`}>
@@ -163,8 +200,25 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
                   {linked ? (
                     <>
                       <Badge variant="outline" className="text-green-400 border-green-400 text-xs">
+                        <Shield className="w-3 h-3 mr-1" />
                         Connected
                       </Badge>
+                      
+                      {/* Update Connection Button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedPlatform(platform.key);
+                          setNewUsername(linked.username);
+                        }}
+                        className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500 text-xs"
+                        disabled={connecting === platform.key}
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Update
+                      </Button>
+                      
                       {/* Unlink Button with Confirmation Dialog */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -216,7 +270,7 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => setSelectedPlatform(platform.key)}
+                      onClick={() => handleConnectClick(platform.key)}
                       disabled={connecting === platform.key}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
@@ -236,6 +290,22 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
                       {linked.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
+                  
+                  {/* Show stats preview if available */}
+                  {linked.stats && (
+                    <div className="mt-2 flex gap-3 text-xs">
+                      {(linked.stats as any)?.totalSolved && (
+                        <span className="text-green-400">
+                          Solved: {(linked.stats as any).totalSolved}
+                        </span>
+                      )}
+                      {(linked.stats as any)?.rating && (
+                        <span className="text-yellow-400">
+                          Rating: {(linked.stats as any).rating}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -246,17 +316,30 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
       {/* Connection Dialog */}
       {selectedPlatform && (
         <div className="border border-blue-500/30 rounded-lg p-4 bg-blue-500/10">
-          <h4 className="font-medium mb-3 text-white">
-            Connect {platforms.find(p => p.key === selectedPlatform)?.name}
-          </h4>
+          <div className="flex items-center gap-2 mb-3">
+            <h4 className="font-medium text-white">
+              {isPlatformLinked(selectedPlatform) ? 'Update' : 'Connect'} {platforms.find(p => p.key === selectedPlatform)?.name}
+            </h4>
+            {isPlatformLinked(selectedPlatform) && (
+              <Badge variant="outline" className="text-blue-400 border-blue-400 text-xs">
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Update Mode
+              </Badge>
+            )}
+          </div>
+          
           <p className="text-sm text-gray-400 mb-3">
-            Enter your username to verify and link your {platforms.find(p => p.key === selectedPlatform)?.name} account.
+            {isPlatformLinked(selectedPlatform) 
+              ? `Update your ${platforms.find(p => p.key === selectedPlatform)?.name} username.`
+              : `Enter your username to verify and link your ${platforms.find(p => p.key === selectedPlatform)?.name} account.`
+            }
           </p>
+          
           <div className="flex gap-2">
             <Input
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder={isPlatformLinked(selectedPlatform) ? "Enter new username" : "Enter your username"}
               className="flex-1 bg-gray-700 border-gray-600 text-white"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newUsername.trim()) {
@@ -272,12 +355,12 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
               {connecting === selectedPlatform ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Verifying...
+                  {isPlatformLinked(selectedPlatform) ? 'Updating...' : 'Verifying...'}
                 </>
               ) : (
                 <>
                   <Link2 className="w-4 h-4 mr-2" />
-                  Connect
+                  {isPlatformLinked(selectedPlatform) ? 'Update' : 'Connect'}
                 </>
               )}
             </Button>
@@ -295,15 +378,31 @@ export function PlatformLinker({ userId, linkedPlatforms }: PlatformLinkerProps)
         </div>
       )}
 
-      {/* Info section */}
+      {/* Info section with enhanced content */}
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-        <h4 className="font-medium text-white mb-2">Why link your platforms?</h4>
-        <ul className="text-sm text-gray-400 space-y-1">
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="font-medium text-white">Why link your platforms?</h4>
+          <Crown className="w-5 h-5 text-purple-400" />
+        </div>
+        
+        <ul className="text-sm text-gray-400 space-y-1 mb-4">
           <li>• Track your progress across all platforms in one place</li>
           <li>• Sync your solved problems automatically</li>
           <li>• Get detailed analytics and insights</li>
           <li>• Never lose track of your coding journey</li>
+          <li>• Compare your performance across different platforms</li>
         </ul>
+
+        {/* ✅ Platform limit information */}
+        <div className="pt-3 border-t border-gray-700">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Shield className="w-3 h-3" />
+            <span>
+              Platform connections are subject to your subscription plan limits. 
+              Pro users get unlimited platform integrations.
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
