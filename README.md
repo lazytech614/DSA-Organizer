@@ -98,33 +98,81 @@ Make sure you have the following installed:
 ## 📁 Project Structure
 
 ```
-dsa-organizer/
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   └── seed.ts               # Database seeding
-├── public/                   # Static assets
+dsa-course-website/
+├── prisma/ # Database schema and migrations
+│ ├── schema.prisma # Prisma database schema
+│ └── seed.ts # Database seeding scripts
+├── public/ # Static assets
+│ ├── icons/ # App icons and favicons
+│ └── images/ # Static images
 ├── src/
-│   ├── app/                  # Next.js app directory
-│   │   ├── api/             # API routes
-│   │   ├── dashboard/       # Dashboard pages
-│   │   ├── problems/        # Problem pages
-│   │   └── layout.tsx       # Root layout
-│   ├── components/          # Reusable UI components
-│   │   ├── ui/             # Base UI components
-│   │   ├── forms/          # Form components
-│   │   └── charts/         # Chart components
-│   ├── lib/                # Utility functions and configurations
-│   │   ├── db.ts           # Database connection
-│   │   ├── auth.ts         # Authentication utilities
-│   │   └── utils.ts        # General utilities
-│   ├── hooks/              # Custom React hooks
-│   ├── types/              # TypeScript type definitions
-│   └── styles/             # Global styles
-├── .env.local              # Environment variables
-├── next.config.js          # Next.js configuration
-├── tailwind.config.js      # Tailwind CSS configuration
-├── tsconfig.json           # TypeScript configuration
-└── package.json            # Dependencies and scripts
+│ ├── app/ # Next.js App Router
+│ │ ├── (auth)/ # Authentication routes
+│ │ ├── api/ # API endpoints
+│ │ ├── dashboard/ # Dashboard pages
+│ │ ├── courses/ # Course-related pages
+│ │ ├── platforms/ # Platform integration pages
+│ │ ├── favicon.ico # App favicon
+│ │ ├── globals.css # Global styles
+│ │ ├── layout.tsx # Root layout component
+│ │ └── page.tsx # Home page
+│ ├── components/ # Reusable UI components
+│ │ ├── admin/ # Admin panel components
+│ │ ├── cards/ # Card components
+│ │ ├── course/ # Course-related components
+│ │ │ ├── course-stats/ # Course statistics components
+│ │ │ ├── question-item/ # Individual question components
+│ │ │ └── topic-section.tsx # Topic section component
+│ │ ├── dialogs/ # Modal and dialog components
+│ │ ├── layout/ # Layout components
+│ │ ├── platform-integration/ # Platform connection components
+│ │ ├── pricing/ # Pricing and subscription components
+│ │ ├── providers/ # Context providers
+│ │ └── ui/ # Base UI components (shadcn/ui)
+│ ├── constants/ # Application constants
+│ ├── generated/ # Generated files
+│ ├── hooks/ # Custom React hooks
+│ │ ├── use-mobile.ts # Mobile detection hook
+│ │ ├── useBookmarks.ts # Bookmark management
+│ │ ├── useCourses.ts # Course data management
+│ │ ├── usePlatformLimits.ts # Platform usage limits
+│ │ ├── usePricing.ts # Pricing and subscriptions
+│ │ ├── useQuestionParsers.ts # Question parsing utilities
+│ │ ├── useQuestions.ts # Question management
+│ │ ├── useSolvedQuestions.ts # Solved question tracking
+│ │ ├── useSubscription.ts # Subscription management
+│ │ └── useUserInfo.ts # User information management
+│ ├── lib/ # Utility libraries and configurations
+│ │ ├── middleware/ # Custom middleware
+│ │ ├── services/ # External service integrations
+│ │ │ └── platform/ # Platform service implementations
+│ │ │ ├── platforms/ # Individual platform services
+│ │ │ │ ├── codeforcesService.ts # Codeforces API integration
+│ │ │ │ ├── leetcodeService.ts # LeetCode API integration
+│ │ │ │ ├── codechefService.ts # CodeChef API integration
+│ │ │ │ └── geeksforgeeksService.ts # GFG integration
+│ │ │ └── platformService.ts # Main platform service
+│ │ ├── trackers/ # Progress tracking utilities
+│ │ │ ├── db.ts # Database utilities
+│ │ │ ├── questionParser.ts # Question parsing logic
+│ │ │ ├── subscription.ts # Subscription utilities
+│ │ │ ├── sync-user.tsx # User synchronization
+│ │ │ └── utils.ts # General utilities
+│ │ └── types/ # TypeScript type definitions
+│ │ └── middleware.ts # Middleware types
+├── .env # Environment variables (template)
+├── .env.local # Local environment variables (gitignored)
+├── .gitignore # Git ignore rules
+├── components.json # shadcn/ui configuration
+├── eslint.config.mjs # ESLint configuration
+├── next-env.d.ts # Next.js TypeScript declarations
+├── next.config.js # Next.js configuration
+├── package.json # Dependencies and scripts
+├── package-lock.json # Lock file for npm
+├── postcss.config.js # PostCSS configuration
+├── README.md # Project documentation
+├── tailwind.config.ts # Tailwind CSS configuration
+
 ```
 
 ## 🗃️ Database Schema

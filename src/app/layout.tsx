@@ -8,8 +8,8 @@ import { UserSyncWrapper } from '@/components/providers/user-sync-wrapper';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'DSA Course Platform',
-  description: 'A platform for organizing and tracking DSA questions',
+  title: 'AlgoTracker',
+  description: 'A platform for organizing and tracking DSA questions and CP progress.',
 };
 
 export default function RootLayout({
