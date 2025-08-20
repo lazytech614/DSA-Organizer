@@ -156,14 +156,6 @@ export default function HomePage() {
               >
                 <Menu className="w-5 h-5" />
               </Button>
-              {/* <div>
-                <h1 className="text-lg font-bold text-orange-400">DSA Platform</h1>
-                {selectedCourse && (
-                  <p className="text-xs text-gray-400 truncate max-w-[200px]">
-                    {selectedCourse.title}
-                  </p>
-                )}
-              </div> */}
             </div>
             
             {/* Mobile header actions */}

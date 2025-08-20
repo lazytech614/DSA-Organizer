@@ -193,7 +193,7 @@ export function CoursesSidebar({
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <h1 className={`font-bold text-orange-400 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                DSA Platform
+                AlgoTracker
               </h1>
               <p className="text-sm text-gray-400 mt-1">
                 {isMobile ? 'Learning path' : 'Choose your learning path'}

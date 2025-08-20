@@ -280,7 +280,7 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
                     <h1 className={`font-bold text-orange-400 truncate ${
                       isMobile ? 'text-base' : isTablet ? 'text-lg' : 'text-xl'
                     }`}>
-                      Statistics
+                      AlgoTracker
                     </h1>
                   </div>
                   <p className={`text-gray-400 mt-1 truncate ${
