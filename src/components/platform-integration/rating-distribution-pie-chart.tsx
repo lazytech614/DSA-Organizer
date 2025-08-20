@@ -1,6 +1,8 @@
-// components/RatingDistributionPieChart.tsx
+'use client';
+
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { RATING_BANDS } from '@/constants/platform-constants';
 
 interface RatingWiseCount {
   below1000?: number;
@@ -24,49 +26,16 @@ interface RatingDistributionPieChartProps {
   className?: string;
 }
 
-// Helper function to prepare chart data
 const prepareChartData = (ratingWiseCount: RatingWiseCount) => {
-  // Updated color map with better, more distinct colors
-  const colorMap: { [key: string]: string } = {
-    below1000: '#94a3b8',        // Light Gray
-    range1000to1199: '#10b981',  // Emerald
-    range1200to1399: '#059669',  // Dark Emerald  
-    range1400to1599: '#06b6d4',  // Cyan
-    range1600to1799: '#3b82f6',  // Blue
-    range1800to1999: '#8b5cf6',  // Violet
-    range2000to2199: '#f59e0b',  // Amber
-    range2200to2399: '#d97706',  // Orange
-    range2400to2599: '#ea580c',  // Deep Orange
-    range2600to2799: '#dc2626',  // Red
-    range2800to2999: '#991b1b',  // Dark Red
-    above3000: '#7c2d12',        // Darkest Red
-    unrated: '#64748b'           // Slate Gray
-  };
-
-  const labelMap: { [key: string]: string } = {
-    below1000: '< 1000',
-    range1000to1199: '1000-1199',
-    range1200to1399: '1200-1399',
-    range1400to1599: '1400-1599',
-    range1600to1799: '1600-1799',
-    range1800to1999: '1800-1999',
-    range2000to2199: '2000-2199',
-    range2200to2399: '2200-2399',
-    range2400to2599: '2400-2599',
-    range2600to2799: '2600-2799',
-    range2800to2999: '2800-2999',
-    above3000: '3000+',
-    unrated: 'Unrated'
-  };
-
   const data: Array<{name: string; value: number; color: string}> = [];
 
   Object.entries(ratingWiseCount).forEach(([key, value]) => {
     if (value && value > 0) {
+      const band = RATING_BANDS[key as keyof typeof RATING_BANDS];
       data.push({
-        name: labelMap[key] || key,
+        name: band.label,
         value: value as number,
-        color: colorMap[key] || '#64748b'
+        color: band.color
       });
     }
   });
@@ -74,7 +43,6 @@ const prepareChartData = (ratingWiseCount: RatingWiseCount) => {
   return data;
 };
 
-// Enhanced tooltip component
 const CustomTooltip = ({ active, payload, total }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
@@ -94,9 +62,8 @@ const CustomTooltip = ({ active, payload, total }: any) => {
   return null;
 };
 
-// Custom label function for better positioning
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-  if (percent < 0.03) return null; // Don't show labels for very small slices
+  if (percent < 0.03) return null;
   
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -151,7 +118,7 @@ const RatingDistributionPieChart: React.FC<RatingDistributionPieChartProps> = ({
               labelLine={false}
               label={renderCustomLabel}
               outerRadius={120}
-              innerRadius={0} // Changed to full pie instead of donut
+              innerRadius={0}
               fill="#8884d8"
               dataKey="value"
               stroke="#1f2937"

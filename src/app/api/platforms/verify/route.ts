@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PlatformService } from '@/lib/platformService';
+import { PlatformService } from '@/lib/services/platform/platformService';
 
 export async function POST(request: NextRequest) {
   try {

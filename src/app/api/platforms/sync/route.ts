@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db as prisma } from '@/lib/db';
-import { PlatformService } from '@/lib/platformService';
+import { PlatformService } from '@/lib/services/platform/platformService';
 import { auth } from '@clerk/nextjs/server';
 import { Prisma, Platform } from '@prisma/client';
 

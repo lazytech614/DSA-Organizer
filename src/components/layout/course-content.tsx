@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { CourseWithQuestions } from '@/types';
-import { TopicSection } from '@/components/course/topic-section';
-import { CourseStats } from '@/components/course/course-stats';
+import { TopicSection } from '@/components/course/topic-section/topic-section';
+import { CourseStats } from '@/components/course/course-stats/course-stats';
 import { AddQuestionDialog } from '@/components/dialogs/add-question-dialog';
 import { Button } from '@/components/ui/button';
 import { Settings, Plus, BookmarkCheck, BookmarkIcon, FilterIcon, ChevronRight, Menu } from 'lucide-react';
