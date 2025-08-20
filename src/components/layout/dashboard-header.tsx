@@ -28,7 +28,8 @@ interface DashboardHeaderProps {
   totalStats?: {
     connectedPlatforms: number;
     totalSolved: number;
-    averageRating: number;
+    rating: number;
+    maxRating: number;
     lastSyncTime: Date | null;
   };
 }
@@ -111,7 +112,7 @@ export function DashboardHeader({
               </Button>
             )}
             <div className="flex items-center space-x-2">
-              {isPlatformPage ? (
+              {isPlatformPage && isSignedIn ? (
                 <>
                   <Code2 className="w-6 h-6 text-blue-400" />
                   <h1 className="text-lg font-bold text-white">Platforms</h1>
@@ -131,7 +132,7 @@ export function DashboardHeader({
 
           {/* Mobile Actions */}
           <div className="flex items-center space-x-2">
-            {!isPlatformPage && (
+            {!isPlatformPage && isSignedIn && (
               <Link 
                 href="/platforms" 
                   className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-700 transition-colors"
@@ -223,7 +224,7 @@ export function DashboardHeader({
         <div className="flex items-center justify-between">
           {/* Course/Platform Info */}
           <div className="flex-1 min-w-0">
-            {isPlatformPage ? (
+            {isPlatformPage && isSignedIn ? (
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-500/20 rounded-lg">
                   <Code2 className="w-6 h-6 text-blue-400" />
@@ -273,7 +274,7 @@ export function DashboardHeader({
             )}
 
             {/* Navigation Links */}
-            {isPlatformPage ? (
+            {isPlatformPage && isSignedIn ? (
               <Link 
                 href="/"
                 className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-700 transition-colors text-gray-300 hover:text-white"

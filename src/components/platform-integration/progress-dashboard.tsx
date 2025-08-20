@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, ExternalLink, TrendingUp, Calendar, Star, Trophy } from 'lucide-react';
 import { UserPlatform } from '@prisma/client';
 import { toast } from 'sonner';
+import { stat } from 'fs';
+import RatingDistributionPieChart from './rating-distribution-pie-chart';
 
 interface ProgressDashboardProps {
   userId: string;
@@ -71,7 +73,6 @@ export function ProgressDashboard({ userId, platforms }: ProgressDashboardProps)
     }
   };
 
-  // ✅ Enhanced rating color function for all platforms
   const getRatingColor = (platform: string, rating: number): string => {
     switch (platform.toLowerCase()) {
       case 'codeforces':
@@ -118,209 +119,128 @@ export function ProgressDashboard({ userId, platforms }: ProgressDashboardProps)
     }
   };
 
-  // ✅ Platform-specific stats renderer
+  // Helper function to format rating ranges
+const formatRatingRange = (range: string) => {
+  const rangeMap: { [key: string]: string } = {
+    below1000: "< 1000",
+    range1000to1199: "1000-1199",
+    range1200to1399: "1200-1399", 
+    range1400to1599: "1400-1599",
+    range1600to1799: "1600-1799",
+    range1800to1999: "1800-1999",
+    range2000to2199: "2000-2199",
+    range2200to2399: "2200-2399",
+    range2400to2599: "2400-2599",
+    range2600to2799: "2600-2799",
+    range2800to2999: "2800-2999",
+    above3000: "3000+",
+    unrated: "Unrated"
+  };
+  return rangeMap[range] || range;
+};
+
+// Helper function to get bar colors for different rating ranges
+const getRatingBarColor = (range: string) => {
+  const colorMap: { [key: string]: string } = {
+    below1000: "bg-gray-400",
+    range1000to1199: "bg-green-400",
+    range1200to1399: "bg-green-500",
+    range1400to1599: "bg-cyan-400",
+    range1600to1799: "bg-blue-400",
+    range1800to1999: "bg-purple-400",
+    range2000to2199: "bg-yellow-400",
+    range2200to2399: "bg-yellow-500",
+    range2400to2599: "bg-orange-400",
+    range2600to2799: "bg-red-400",
+    range2800to2999: "bg-red-500",
+    above3000: "bg-red-600",
+    unrated: "bg-gray-500"
+  };
+  return colorMap[range] || "bg-gray-400";
+};
+
+
   const renderPlatformStats = (platform: string, stats: any) => {
-    const platformLower = platform.toLowerCase();
-
-    switch (platformLower) {
-      case 'leetcode':
-        return (
-          <>
-            {stats?.totalSolved !== undefined && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-400">Problems Solved</span>
-                  <span className="font-bold text-lg text-white">{stats.totalSolved}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div className="text-center p-2 bg-green-500/10 rounded">
-                    <div className="text-green-400 font-semibold">{stats.easySolved || 0}</div>
-                    <div className="text-xs text-gray-400">Easy</div>
-                  </div>
-                  <div className="text-center p-2 bg-yellow-500/10 rounded">
-                    <div className="text-yellow-400 font-semibold">{stats.mediumSolved || 0}</div>
-                    <div className="text-xs text-gray-400">Medium</div>
-                  </div>
-                  <div className="text-center p-2 bg-red-500/10 rounded">
-                    <div className="text-red-400 font-semibold">{stats.hardSolved || 0}</div>
-                    <div className="text-xs text-gray-400">Hard</div>
-                  </div>
-                </div>
-              </div>
+    return (
+      <>
+        {stats?.rating !== undefined && (
+          <div className="space-y-2">
+            {stats.title && (
+              <div className={`${getRatingColor(platform, stats.rating)} font-semibold`}>{stats.title}</div>
             )}
-            {stats?.acceptanceRate !== undefined && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Acceptance Rate</span>
-                <span className="font-semibold text-white">{stats.acceptanceRate}%</span>
-              </div>
-            )}
-            {stats?.ranking && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Global Ranking</span>
-                <span className="font-semibold text-blue-400">#{stats.ranking.toLocaleString()}</span>
-              </div>
-            )}
-          </>
-        );
-
-      case 'codeforces':
-        return (
-          <>
-            {stats?.rating !== undefined && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Current Rating</span>
-                  <Badge className={`${getRatingColor(platform, stats.rating)} bg-transparent border-current`}>
-                    {stats.rating}
-                  </Badge>
-                </div>
-                {stats.maxRating && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Max Rating</span>
-                    <span className={`font-semibold ${getRatingColor(platform, stats.maxRating)}`}>
-                      {stats.maxRating}
-                    </span>
-                  </div>
-                )}
-                {stats.rank && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Rank</span>
-                    <Badge variant="outline" className="capitalize">
-                      {stats.rank}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            )}
-            {stats?.problemStats?.solvedCount !== undefined && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Problems Solved</span>
-                <span className="font-semibold text-white">{stats.problemStats.solvedCount}</span>
-              </div>
-            )}
-          </>
-        );
-
-      case 'geeksforgeeks':
-        return (
-          <>
-            {stats?.totalSolved !== undefined && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-400">Problems Solved</span>
-                  <span className="font-bold text-lg text-white">{stats.totalSolved}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div className="text-center p-2 bg-green-500/10 rounded">
-                    <div className="text-green-400 font-semibold">{stats.easySolved || 0}</div>
-                    <div className="text-xs text-gray-400">Easy</div>
-                  </div>
-                  <div className="text-center p-2 bg-yellow-500/10 rounded">
-                    <div className="text-yellow-400 font-semibold">{stats.mediumSolved || 0}</div>
-                    <div className="text-xs text-gray-400">Medium</div>
-                  </div>
-                  <div className="text-center p-2 bg-red-500/10 rounded">
-                    <div className="text-red-400 font-semibold">{stats.hardSolved || 0}</div>
-                    <div className="text-xs text-gray-400">Hard</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {stats?.acceptanceRate !== undefined && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Acceptance Rate</span>
-                <span className="font-semibold text-white">{stats.acceptanceRate}%</span>
-              </div>
-            )}
-            {stats?.ranking && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Global Ranking</span>
-                <span className="font-semibold text-blue-400">#{stats.ranking.toLocaleString()}</span>
-              </div>
-            )}
-          </>
-        );
-
-      case 'codechef':
-        return (
-          <>
-            <div className="space-y-3">
-              {stats?.rating !== undefined && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-400">Current Rating</span>
-                    <Badge className={`${getRatingColor(platform, stats.rating)} bg-transparent border-current`}>
-                      {stats.rating}
-                    </Badge>
-                  </div>
-                  {stats.maxRating && stats.maxRating !== stats.rating && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-400">Max Rating</span>
-                      <span className={`font-semibold ${getRatingColor(platform, stats.maxRating)}`}>
-                        {stats.maxRating}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {stats?.stars && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Stars</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                    <span className="font-semibold text-yellow-400">{stats.stars}</span>
-                  </div>
-                </div>
-              )}
-              
-              {stats?.totalSolved !== undefined && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Problems Solved</span>
-                  <span className="font-semibold text-white">{stats.totalSolved}</span>
-                </div>
-              )}
-              
-              {stats?.contests !== undefined && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Contests</span>
-                  <span className="font-semibold text-blue-400">{stats.contests}</span>
-                </div>
-              )}
-              
-              {stats?.rank !== undefined && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Global Rank</span>
-                  <span className="font-semibold text-purple-400">#{stats.rank.toLocaleString()}</span>
-                </div>
-              )}
-              
-              {stats?.countryRank !== undefined && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Country Rank</span>
-                  <span className="font-semibold text-green-400">#{stats.countryRank.toLocaleString()}</span>
-                </div>
-              )}
-              
-              {stats?.division && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Division</span>
-                  <Badge variant="outline" className="text-xs">
-                    {stats.division}
-                  </Badge>
-                </div>
-              )}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Current Rating</span>
+              <Badge className={`${getRatingColor(platform, stats.rating)} bg-transparent border-current`}>
+                {stats.rating}
+              </Badge>
             </div>
-          </>
-        );
-
-      default:
-        return (
-          <div className="text-center py-4">
-            <span className="text-sm text-gray-400">No data available</span>
+            {stats.maxRating && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Max Rating</span>
+                <span className={`font-semibold ${getRatingColor(platform, stats.maxRating)}`}>
+                  {stats.maxRating}
+                </span>
+              </div>
+            )}
+            {stats.rank && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Best Rank</span>
+                <Badge variant="outline" className="capitalize">
+                  {stats.rank}
+                </Badge>
+              </div>
+            )}
+            {stats.lastThreeRanks && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Last 3 Ranks</span>
+                <div className="flex gap-1">
+                  {stats.lastThreeRanks.map((rank: string, index: number) => (
+                    <Badge key={index} variant="outline" className="capitalize text-xs">
+                      {rank}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        );
-    }
+        )}
+
+        {stats?.totalSolved !== undefined && (
+          <div className="space-y-4">
+            {/* Total Problems Solved */}
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Total Problems</span>
+              <span className="font-bold text-lg text-white">{stats.totalSolved}</span>
+            </div>
+
+            {/* Easy/Medium/Hard breakdown */}
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="text-center p-2 bg-green-500/10 rounded">
+                <div className="text-green-400 font-semibold">{stats.easySolved || 0}</div>
+                <div className="text-xs text-gray-400">Easy</div>
+              </div>
+              <div className="text-center p-2 bg-yellow-500/10 rounded">
+                <div className="text-yellow-400 font-semibold">{stats.mediumSolved || 0}</div>
+                <div className="text-xs text-gray-400">Medium</div>
+              </div>
+              <div className="text-center p-2 bg-red-500/10 rounded">
+                <div className="text-red-400 font-semibold">{stats.hardSolved || 0}</div>
+                <div className="text-xs text-gray-400">Hard</div>
+              </div>
+            </div>
+
+            {/* Replace the entire rating-wise breakdown section with the pie chart */}
+            {stats.ratingWiseCount && (
+              <RatingDistributionPieChart 
+                ratingWiseCount={stats.ratingWiseCount}
+                totalSolved={stats.totalSolved}
+                className="mt-4"
+              />
+            )}
+          </div>
+        )}
+      </>
+    );
   };
 
   if (platforms.length === 0) {
@@ -370,13 +290,24 @@ export function ProgressDashboard({ userId, platforms }: ProgressDashboardProps)
       </div>
 
       {/* Platform Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[minmax(200px,auto)]">
         {platforms.map(platformData => {
           const stats = platformData.stats as any;
           const platform = platformData.platform;
           
+          // Determine if this card has complex content (pie charts, lots of data)
+          const isComplexCard = (platform.toLowerCase() === 'codeforces' && stats?.ratingWiseCount) ||
+                              (stats?.totalSolved > 500) ||
+                              (stats?.ratingWiseCount && Object.keys(stats.ratingWiseCount).length > 5);
+          
           return (
-            <Card key={platform} className="bg-gray-800 border-gray-700 hover:border-gray-600 transition-all duration-200">
+            <Card 
+              key={platform} 
+              className={`
+                bg-gray-800 border-gray-700 hover:border-gray-600 transition-all duration-200
+                ${isComplexCard ? 'md:row-span-2 xl:row-span-2' : ''}
+              `}
+            >
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">

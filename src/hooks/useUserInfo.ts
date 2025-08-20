@@ -21,6 +21,7 @@ export interface UserInfo {
   // Usage tracking
   totalCoursesCreated: number;
   bookmarkedQuestions: string[];
+  totalPlatformsLinked: number;
   
   // Derived subscription info
   isPro: boolean;
@@ -33,6 +34,10 @@ export interface UserInfo {
     coursesUsed: number;
     coursesRemaining: number;
     canCreateCourse: boolean;
+    maxPlatforms: number;
+    platformsLinked: number;
+    canLinkPlatform: boolean;
+    platformsRemaining: number;
   };
   
   // User courses
@@ -50,6 +55,14 @@ export interface UserInfo {
     id: string;
     questionId: string;
     solvedAt: string;
+  }>;
+
+  platforms: Array<{
+    id: string;
+    platform: string;
+    username: string;
+    stats: any;
+    isActive: boolean
   }>;
   
   // Statistics

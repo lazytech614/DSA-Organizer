@@ -78,8 +78,6 @@ export async function POST(request: NextRequest) {
     // Verify username exists on platform
     const platformService = new PlatformService();
     const userData = await platformService.fetchUserData(platform.toLowerCase(), username);
-
-    console.log("🤣🤣userData:", userData);
     
     if (!userData) {
       return NextResponse.json(

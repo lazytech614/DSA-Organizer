@@ -522,20 +522,38 @@ export function CoursesSidebar({
                 </div>
               </div>
             ) : (
-              <div className="bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg p-4 flex items-start space-x-3 transform transition-all duration-300 hover:bg-blue-500/20">
-                <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+              <div className='space-y-2'>
+                <div className="bg-blue-500/10 border-l-4 border-blue-500 rounded-r-lg p-4 flex items-start space-x-3 transform transition-all duration-300 hover:bg-blue-500/20">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-blue-300 font-medium mb-1">Create Custom Courses</h4>
+                    <p className="text-gray-300 text-sm mb-3">Sign in to add new courses to organize your questions and track your learning progress.</p>
+                    <SignInButton>
+                      <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition-all duration-200 hover:scale-105">
+                        Create Now
+                      </Button>
+                    </SignInButton>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-blue-300 font-medium mb-1">Create Custom Courses</h4>
-                  <p className="text-gray-300 text-sm mb-3">Sign in to add new courses to organize your questions and track your learning progress.</p>
-                  <SignInButton>
-                    <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition-all duration-200 hover:scale-105">
-                      Create Now
-                    </Button>
-                  </SignInButton>
+                <div className="bg-green-500/10 border-l-4 border-green-500 rounded-r-lg p-4 flex items-start space-x-3 transform transition-all duration-300 hover:bg-green-500/20">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-green-300 font-medium mb-1">Link Coding Platforms</h4>
+                    <p className="text-gray-300 text-sm mb-3">Sign in to connect your LeetCode, Codeforces, GeeksforGeeks, and other platforms to view all your coding stats in one place.</p>
+                    <SignInButton>
+                      <Button className="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded transition-all duration-200 hover:scale-105">
+                        Connect Platforms
+                      </Button>
+                    </SignInButton>
+                  </div>
                 </div>
               </div>
             )}

@@ -29,7 +29,8 @@ async function getUserStats(userId: string) {
   let totalStats = {
     connectedPlatforms: platforms.length,
     totalSolved: 0,
-    averageRating: 0,
+    rating: 0,
+    maxRating: 0,
     lastSyncTime: null as Date | null
   };
 
@@ -39,6 +40,14 @@ async function getUserStats(userId: string) {
       
       if (stats.totalSolved) {
         totalStats.totalSolved += stats.totalSolved;
+      }
+
+      if(stats.rating) {
+        totalStats.rating = Math.max(totalStats.rating, stats.rating);
+      }
+
+      if(stats.maxRating) {
+        totalStats.maxRating = Math.max(totalStats.maxRating, stats.maxRating);
       }
       
       if (!totalStats.lastSyncTime || platform.lastSync > totalStats.lastSyncTime) {

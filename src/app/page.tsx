@@ -180,7 +180,10 @@ export default function HomePage() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto main-content-scroll">
-          <CourseContent course={selectedCourse} />
+          <CourseContent 
+            course={selectedCourse} 
+            sidebarCollapsed={!isMobile && sidebarCollapsed} 
+          />
         </div>
       </div>
 

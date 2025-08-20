@@ -20,8 +20,14 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  AlertTriangle,
+  Crown,
+  User
 } from 'lucide-react';
+import Link from 'next/link';
+import { useUserInfo } from '@/hooks/useUserInfo';
+import { useUser } from '@clerk/nextjs';
 
 interface PlatformDashboardProps {
   userId: string;
@@ -29,7 +35,8 @@ interface PlatformDashboardProps {
   totalStats: {
     connectedPlatforms: number;
     totalSolved: number;
-    averageRating: number;
+    rating: number;
+    maxRating: number;
     lastSyncTime: Date | null;
   };
 }
@@ -40,6 +47,8 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const { isSignedIn } = useUser();
+  const { data: userInfo, isLoading, isError } = useUserInfo();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -73,11 +82,6 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
 
   // Calculate additional stats
   const additionalStats = {
-    averageRating: platforms.reduce((sum, platform) => {
-      const stats = platform.stats as any;
-      return sum + (stats?.rating || 0);
-    }, 0) / Math.max(platforms.length, 1),
-    
     totalContests: platforms.reduce((sum, platform) => {
       const stats = platform.stats as any;
       return sum + (stats?.contests || 0);
@@ -158,6 +162,89 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
     if (isMobile) return 'w-80'; // Mobile expanded (overlay)
     if (isTablet) return 'w-72'; // Tablet expanded (overlay)
     return 'w-80'; // Desktop expanded
+  };
+
+  const getUsagePercentage = () => {
+    if (!userInfo?.limits) return 0;
+    const { coursesUsed, maxCourses } = userInfo.limits;
+    if (maxCourses === -1) return 0;
+    return (coursesUsed / maxCourses) * 100;
+  };
+
+  const renderSubscriptionNotice = () => {
+    if (!userInfo) return null;
+
+    const { isPro, limits, stats } = userInfo;
+    const usagePercentage = getUsagePercentage();
+
+    if (isPro) {
+      return (
+        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4 transform transition-all duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown className="w-4 h-4 text-yellow-400" />
+            <h4 className="text-yellow-300 font-medium text-sm">Pro Member</h4>
+          </div>
+          <div className="space-y-1 text-xs text-yellow-200">
+            <div className="flex justify-between">
+              <span>Platforms:</span>
+              <span className="font-medium">Unlimited</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const isNearLimit = usagePercentage >= 80;
+    const isAtLimit = !limits.canCreateCourse;
+
+    if (isAtLimit) {
+      return (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 space-y-2 transform transition-all duration-300">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+            <h4 className="text-red-300 font-medium text-sm">Limit Reached</h4>
+          </div>
+          <p className="text-xs text-red-200 mb-3">
+            You've used all {limits.maxPlatforms} platforms slots. Upgrade to link unlimited platforms!
+          </p>
+          <Link href="/pricing">
+            <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white text-xs h-7 transition-colors">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade Now
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 mb-4 transform transition-all duration-300">
+        <div className="flex items-center gap-2 mb-2">
+          <User className="w-4 h-4 text-gray-400" />
+          <h4 className="text-gray-300 font-medium text-sm">Free Plan</h4>
+        </div>
+        <div className="space-y-2">
+          <div className="text-xs text-gray-400">
+            <div className="flex justify-between mb-1">
+              <span>Platforms:</span>
+              <span className="font-medium text-gray-300">{limits.platformsLinked} / {limits.maxPlatforms}</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div 
+                className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${usagePercentage}%` }}
+              />
+            </div>
+          </div>
+          <Link href="/pricing">
+            <Button size="sm" variant="outline" className="w-full text-xs h-7 border-gray-600 hover:bg-gray-700 transition-colors">
+              <Crown className="w-3 h-3 mr-1" />
+              Upgrade to Pro
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -289,7 +376,7 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
                   </div>
                   <div className="flex flex-col items-center p-2 bg-yellow-500/10 rounded-lg transition-all duration-200 hover:bg-yellow-500/20" title="Average Rating">
                     <TrendingUp className="w-5 h-5 text-yellow-400 mb-1" />
-                    <span className="text-xs font-bold text-white">{Math.round(additionalStats.averageRating) || 0}</span>
+                    <span className="text-xs font-bold text-white">{totalStats.rating || 0}</span>
                   </div>
                   <div className="flex flex-col items-center p-2 bg-purple-500/10 rounded-lg transition-all duration-200 hover:bg-purple-500/20" title="Days Since Last Sync">
                     <Calendar className="w-5 h-5 text-purple-400 mb-1" />
@@ -341,6 +428,13 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
             ) : (
               // Expanded view - Full content
               <div className="space-y-4 lg:space-y-6">
+                {!sidebarCollapsed && isSignedIn && !isLoading && (
+                  <div className={`border-b border-gray-700 transition-all duration-300 delay-100 ${
+                    isMobile ? (isVisible ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
+                  }`}>
+                    {renderSubscriptionNotice()}
+                  </div>
+                )}
                 {/* Refresh Button */}
                 <div className={`transform transition-all duration-300 ${
                   (isMobile || isTablet) ? (isVisible ? 'translate-x-0 opacity-100' : 'transform -translate-x-4 opacity-0') : ''
@@ -417,11 +511,11 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
                           <span className={`font-medium text-gray-300 ${isMobile ? 'text-xs' : 'text-sm'}`}>Rating</span>
                         </div>
                         <span className={`font-bold text-yellow-400 ${isMobile ? 'text-base' : 'text-lg'}`}>
-                          {Math.round(additionalStats.averageRating) || 'N/A'}
+                          {Math.round(totalStats.rating) || 'N/A'}
                         </span>
                       </div>
                       <div className={`flex justify-between text-gray-400 ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                        <span>Max: {additionalStats.maxRating || 'N/A'}</span>
+                        <span>Max: {totalStats.maxRating || 'N/A'}</span>
                         <span>Contests: {additionalStats.totalContests}</span>
                       </div>
                     </div>
@@ -524,7 +618,7 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
                     <div className="space-y-2">
                       {totalStats.totalSolved >= 100 && (
                         <div className={`flex items-center space-x-2 bg-yellow-500/10 rounded-lg transition-all duration-300 hover:bg-yellow-500/20 ${
-                          isMobile ? 'p-2' : 'p-4'
+                          isMobile ? 'p-2' : 'p-2'
                         }`}>
                           <Trophy className="w-4 h-4 text-yellow-400 flex-shrink-0" />
                           <span className={`text-yellow-400 ${isMobile ? 'text-xs' : 'text-xs'}`}>100+ Problems Solved</span>
@@ -618,7 +712,7 @@ export function PlatformDashboard({ userId, platforms, totalStats }: PlatformDas
             </div>
 
             <TabsContent value="connect" className="space-y-4 lg:space-y-6">
-              <PlatformLinker userId={userId} linkedPlatforms={platforms} />
+              <PlatformLinker userId={userId} linkedPlatforms={platforms}  />
             </TabsContent>
 
             <TabsContent value="progress" className="space-y-4 lg:space-y-6">

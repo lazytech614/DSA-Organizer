@@ -33,6 +33,16 @@ export async function GET(request: NextRequest) {
             solvedAt: true,
           },
           orderBy: { solvedAt: 'desc' }
+        },
+        linkedPlatforms: {
+          where: { isActive: true },
+          select: { 
+            id: true,
+            platform: true,
+            username: true,
+            isActive: true,
+            stats: true
+          }
         }
       }
     });
@@ -56,6 +66,9 @@ export async function GET(request: NextRequest) {
     const coursesUsed = user.courses.length;
     const coursesRemaining = subscriptionPlan.maxCourses === -1 ? -1 : Math.max(0, subscriptionPlan.maxCourses - coursesUsed);
     const canCreateCourse = subscriptionPlan.maxCourses === -1 || coursesUsed < subscriptionPlan.maxCourses;
+    const platformsLinked = user.linkedPlatforms.length;
+    const platformsRemaining = subscriptionPlan.maxPlatforms === -1 ? -1 : Math.max(0, subscriptionPlan.maxPlatforms - platformsLinked);
+    const canLinkPlatform = subscriptionPlan.maxPlatforms === -1 || user.linkedPlatforms.length < subscriptionPlan.maxPlatforms;
 
     // Calculate streak (simplified - you can make this more sophisticated)
     const calculateStreak = (solvedQuestions: typeof user.solvedQuestions) => {
@@ -101,6 +114,7 @@ export async function GET(request: NextRequest) {
       // Usage tracking
       totalCoursesCreated: user.totalCoursesCreated,
       bookmarkedQuestions: user.bookmarkedQuestions,
+      totalPlatformsLinked: user.totalPlatformsLinked,
       
       // Derived subscription info
       isPro,
@@ -113,6 +127,10 @@ export async function GET(request: NextRequest) {
         coursesUsed,
         coursesRemaining,
         canCreateCourse,
+        maxPlatforms: subscriptionPlan.maxPlatforms,
+        platformsLinked,
+        platformsRemaining,
+        canLinkPlatform,
       },
       
       // User courses
@@ -130,6 +148,14 @@ export async function GET(request: NextRequest) {
         id: sq.id,
         questionId: sq.questionId,
         solvedAt: sq.solvedAt.toISOString(),
+      })),
+
+      platforms: user.linkedPlatforms.map(platform => ({
+        id: platform.id,
+        platform: platform.platform,
+        username: platform.username,
+        isActive: platform.isActive,
+        stats: platform.stats,
       })),
       
       // Statistics

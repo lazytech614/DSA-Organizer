@@ -104,10 +104,12 @@ export function PlatformHeader({ platforms, totalStats, isMobile = false }: Plat
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
-            <div className="flex items-center space-x-2">
-              <Code2 className="w-6 h-6 text-blue-400" />
-              <h1 className="text-lg font-bold text-white">Platforms</h1>
-            </div>
+            {isSignedIn && (
+              <div className="flex items-center space-x-2">
+                <Code2 className="w-6 h-6 text-blue-400" />
+                <h1 className="text-lg font-bold text-white">Platforms</h1>
+              </div>
+            )}
           </div>
 
           {/* Mobile Actions */}
