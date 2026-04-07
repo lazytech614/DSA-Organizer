@@ -37,3 +37,22 @@ export async function withSubscriptionLimit(
 
   return null; // Continue with the request
 }
+
+export async function withSubscriptionLimit2(
+  action: 'CREATE_COURSE' | 'ADD_QUESTION' | 'LINK_PLATFORM',
+  courseId?: string
+) {
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) throw new Error("Unauthorized");
+
+  const user = await db.user.findUnique({
+    where: { clerkId: clerkUserId }
+  });
+
+  if (!user) throw new Error("User not found");
+
+  const limitCheck = await checkSubscriptionLimit(user.id, action, courseId);
+
+  if (!limitCheck.allowed)
+    throw new Error(limitCheck.reason || "Subscription limit reached");
+}
