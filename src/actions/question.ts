@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { Difficulty } from "@prisma/client";
+import { QuestionParser } from "@/lib/questionParser";
 
 export async function getQuestions() {
   try {
@@ -324,5 +325,22 @@ export async function removeBookmark(questionId: string) {
   } catch (error) {
     console.error("Error removing bookmark:", error);
     throw new Error("Failed to remove bookmark");
+  }
+}
+
+export async function parseQuestionFromUrl(url: string) {
+  try {
+    if (!url || typeof url !== "string")
+      throw new Error("Valid URL is required");
+
+    const parsedData = await QuestionParser.parseUrl(url);
+
+    if (!parsedData)
+      throw new Error("Unable to parse question from this URL");
+
+    return { success: true, data: parsedData };
+  } catch (error) {
+    console.error("Parse question error:", error);
+    throw new Error("Failed to parse question");
   }
 }
