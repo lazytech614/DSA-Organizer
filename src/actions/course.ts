@@ -3,6 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { withSubscriptionLimit2 } from "@/lib/middleware/subscription";
+import { checkSubscriptionLimit } from "@/lib/subscription";
 
 export async function getCoursesWithProgress() {
   try {
@@ -96,6 +97,9 @@ export async function createUserCourse(title: string) {
   try {
     const user = await currentUser();
     if (!user) throw new Error("User not found");
+
+    const limitCheck = await checkSubscriptionLimit(user.id, "CREATE_COURSE");
+    if(!limitCheck.allowed) throw new Error("Subscription limit reached");
 
     // 🔄 Upsert user
     const dbUser = await db.user.upsert({
